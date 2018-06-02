@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: springboot-kong
+
+management:
+  endpoints:
+    web.exposure.include: health, httptrace
