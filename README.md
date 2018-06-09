@@ -2,7 +2,7 @@
 
 ## Goal
 
-The goal of this project is to create a simple REST API and securing it with **Kong** using the `Basic Authentication` plugin.
+The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the `Basic Authentication` plugin.
 Besides, we will explore more plugins that Kong offers like: `Rate Limiting` and `StatsD` plugins.
 
 ## Start environment
@@ -112,12 +112,12 @@ Response Body: null, it is private.
 In this tutorial, we are going to add three plugins: `Basic Authentication`, `Rate Limiting` and `StatsD`.
 Please refer to https://konghq.com/plugins for more plugins.
 
-#### Add `Basic Authentication` plugin
+#### Add Basic Authentication plugin
 
 1. Add plugin to `/api/private` endpoint route
 ```
 curl -X POST http://localhost:8001/routes/${PRIVATE_ROUTE_ID}/plugins \
-  -d "name=basic-auth"  \
+  -d "name=basic-auth" \
   -d "config.hide_credentials=true"
 ```
 
@@ -161,7 +161,7 @@ Please refer to https://getkong.org/plugins/basic-authentication for more inform
 
 In the example above, the application controller is using the `X-Credential-Username` header to log `ivan.franchin`.
 
-#### Add `Rate Limiting` plugin
+#### Add Rate Limiting plugin
 
 1. Add plugin to `springboot-kong` service
 ```
@@ -181,7 +181,7 @@ Code: 429 Too Many Requests
 Response Body: {"message":"API rate limit exceeded"}
 ```
 
-#### Add `StatsD` plugin
+#### Add StatsD plugin
 
 1. Add plugin to `springboot-kong` service
 
