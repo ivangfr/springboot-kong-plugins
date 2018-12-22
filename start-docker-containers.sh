@@ -3,11 +3,32 @@
 # In this project we are using `Postgres` database for Kong. Another option is `Cassandra`.
 # If you'd like to use Cassandra, please refer to https://getkong.org/install/docker
 
+echo "Creating network"
+docker network create springboot-kong-net
+
+echo "Starting springboot-kong container"
+docker run -d \
+  --name springboot-kong \
+  --network=springboot-kong-net \
+  --restart=unless-stopped \
+  docker.mycompany.com/springboot-kong:latest
+
+echo "Starting ldap-host"
+docker run -d \
+  --name ldap-host \
+  --network=springboot-kong-net \
+  --restart=unless-stopped \
+  -p 389:389 \
+  -e "LDAP_ORGANISATION=MyCompany Inc." \
+  -e "LDAP_DOMAIN=mycompany.com" \
+  osixia/openldap:1.2.2
+
 echo "Starting graphite-statsd"
 docker run -d \
-  --name graphite \
+  --name graphite-statsd \
+  --network=springboot-kong-net \
   --restart=unless-stopped \
-  -p 8081:80\
+  -p 8081:80 \
   -p 2003-2004:2003-2004 \
   -p 2023-2024:2023-2024 \
   -p 8125:8125/udp \
@@ -17,6 +38,7 @@ docker run -d \
 echo "Starting kong-database container"
 docker run -d \
   --name kong-database \
+  --network=springboot-kong-net \
   --restart=unless-stopped \
   -p 5432:5432 \
   -e "POSTGRES_USER=kong" \
@@ -25,9 +47,18 @@ docker run -d \
 
 sleep 5
 
+echo "Starting phpldapadmin-service"
+docker run -d \
+  --name phpldapadmin-service \
+  --network=springboot-kong-net \
+  --restart=unless-stopped \
+  -p 6443:443 \
+  -e "PHPLDAPADMIN_LDAP_HOSTS=ldap-host" \
+  osixia/phpldapadmin:0.7.2
+
 echo "Running kong-database migration"
 docker run --rm \
-  --link kong-database:kong-database \
+  --network=springboot-kong-net \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   kong:0.14.1 kong migrations up
@@ -37,8 +68,8 @@ sleep 3
 echo "Starting kong"
 docker run -d \
   --name kong \
+  --network=springboot-kong-net \
   --restart=unless-stopped \
-  --link kong-database:kong-database \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PROXY_ACCESS_LOG=/dev/stdout" \
@@ -60,11 +91,14 @@ echo "-------------------------------------------"
 while true; do
     # In the following line -t for timeout, -N for just 1 character
     read -t 0.25 -N 1 input
-    if [[ $input = "q" ]] || [[ $input = "Q" ]]; then
+    if [[ ${input} = "q" ]] || [[ ${input} = "Q" ]]; then
         echo
         break
     fi
 done
 
 echo "Removing containers"
-docker rm -fv graphite kong-database kong
+docker rm -fv springboot-kong graphite-statsd kong-database kong phpldapadmin-service ldap-host
+
+echo "Removing network"
+docker network rm springboot-kong-net

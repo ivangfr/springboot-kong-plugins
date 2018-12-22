@@ -3,8 +3,15 @@
 ## Goal
 
 The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the
-`Basic Authentication` plugin. Besides, we will explore more plugins that Kong offers like: `Rate Limiting` and `StatsD`
-plugins.
+`LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that Kong offers like:
+`Rate Limiting` and `StatsD` plugins.
+
+## Build springboot-kong docker image
+
+In `/springboot-kong` root folder, run
+```
+mvn clean package docker:build -DskipTests
+``` 
 
 ## Start environment
 
@@ -16,30 +23,43 @@ Run the following script present in `springboot-kong` project root folder.
 ./start-docker-containers
 ```
 
-## Start `springboot-kong` application
+## Configuring OpenLDAP
 
-- Open a new terminal.
-- Run the following command to start `springboot-kong` application.
+![openldap](images/openldap.png)
+
+1. Access the link: https://localhost:6443
+
+2. Login with the credentials
 ```
-mvn clean spring-boot:run
+Login DN: cn=admin,dc=mycompany,dc=com
+Password: admin
+```
+
+3. Import the file `/springboot-kong/ldap/ldap-mycompany-com.ldif`
+
+This file has already a pre-defined structure for mycompany.com.
+Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and Ivan Franchin).
+Besides, it is defined that Bill Gates, Steve Jobs and Mark Cuban belong to developers group and Ivan Franchin belongs to admin group.
+```
+Bill Gates > username: bgates, password: 123
+Steve Jobs > username: sjobs, password: 123
+Mark Cuban > username: mcuban, password: 123
+Ivan Franchin > username: ifranchin, password: 123
+```
+
+4. In a terminal, you can test OpenLDAP
+```
+ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
+  -w admin -H ldap://localhost:389 \
+  -b "ou=users,dc=mycompany,dc=com" \
+  -s sub "(uid=*)"
 ```
 
 ## KONG
 
-Please, refer to `Kong Admin API` https://getkong.org/docs/0.13.x/admin-api in order to get a complete documentation.
-
-### Pre-configuration
-
-- Open a new terminal where all `Kong` configuration commands will be executed.
-- Export your machine ip address to `HOST_IP_ADDR` environment variable.
-> It can be obtained by executing ifconfig command on Mac/Linux terminal or ipconfig on Windows;
-```
-export HOST_IP_ADDR=...
-```
-
-- Check if `Kong` it's running
+Before adding to Kong Services, Routes and Plugins, check if `Kong` it's running
 ``` 
-curl http://localhost:8001
+curl -I http://localhost:8001
 ```
 
 ### Add Service
@@ -49,7 +69,7 @@ curl http://localhost:8001
 curl -i -X POST http://localhost:8001/services/ \
   -d "name=springboot-kong" \
   -d "protocol=http" \
-  -d "host=${HOST_IP_ADDR}" \
+  -d "host=springboot-kong" \
   -d "port=8080"
 ```
 
@@ -60,143 +80,272 @@ the `url` shorthand attribute can be used.
 ```
 curl -i -X POST http://localhost:8001/services/ \
   -H 'Content-Type: application/json' \
-  -d '{ "name": "springboot-kong", "url":"http://'${HOST_IP_ADDR}':8080" }'
+  -d '{ "name": "springboot-kong", "url":"http://springboot-kong:8080" }'
 ```
 
 ### Add routes
 
-- One route for `/api/public` endpoint
+1. One route for `/api/public` endpoint (open to everybody)
 ```
-curl -i -X POST http://localhost:8001/services/springboot-kong/routes/ \
+PUBLIC_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
   -d "protocols[]=http" \
   -d "hosts[]=springboot-kong" \
   -d "paths[]=/api/public" \
-  -d "strip_path=false"
+  -d "strip_path=false" | jq -r '.id')
+  
+echo "PUBLIC_ROUTE_ID=$PUBLIC_ROUTE_ID"
 ```
 
-- Another for `/api/private` endpoint
+2. Another for `/api/private` endpoint (secured, only accessible by LDAP users)
 ```
 PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
   -H 'Content-Type: application/json' \
-  -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/api/private"], "strip_path": false }' | jq -r .id)
-```
-Here, I am getting the `/api/private` route id. It will be used on the next steps. To see the value type
-`echo $PRIVATE_ROUTE_ID`
+  -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/api/private"], "strip_path": false }' | jq -r '.id')
 
-In order to list all routes, run: `curl -s http://localhost:8001/routes | jq .`
+echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
+```
+
+3. Finally, one route for `/actuator/httptrace` endpoint (secured, only accessible by pre-defined users)
+```
+HTTPTRACE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
+  -H 'Content-Type: application/json' \
+  -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/actuator/httptrace"], "strip_path": false }' | jq -r '.id')
+
+echo "HTTPTRACE_ROUTE_ID=$HTTPTRACE_ROUTE_ID"
+```
+
+> In order to list all `springboot-kong` routes, run: `curl -s http://localhost:8001/services/springboot-kong/routes | jq .`
 
 ### Call endpoints
 
-- `/api/public` endpoint
+1. `/api/public` endpoint
 ```
 curl -i http://localhost:8000/api/public -H 'Host: springboot-kong'
 ```
 
 It should return
 ```
-Code: 200
-Response Body: It is public.
+HTTP/1.1 200
+It is public.
 ```
 
-- `/api/private` endpoint
+2. `/api/private` endpoint
+```
+curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
+```
+
+It should return
+```
+HTTP/1.1 200
+null, it is private.
+```
 
 **PS. this endpoint is not secured by the application, that is why the response is returned. The idea is to use Kong to
 secure it. It will be done on the next steps.**
+
+3. `/actuator/httptrace` endpoint
 ```
-curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
+curl -i http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
 ```
 
 It should return
 ```
-Code: 200
-Response Body: null, it is private.
+HTTP/1.1 200
+{"traces":[{"timestamp":"...
 ```
+
+**PS. again, as happened previously with `/api/private`, `/actuator/httptrace` endpoint is not secured by the application.
+We will use Kong to secure it on the next steps.**
 
 ### Plugins
 
-In this tutorial, we are going to add three plugins: `Basic Authentication`, `Rate Limiting` and `StatsD`.
+In this project, we are going to add those plugins: `LDAP Authentication`, `Rate Limiting`, `StatsD` and `Basic Authentication`.
 Please refer to https://konghq.com/plugins for more plugins.
 
-#### Add Basic Authentication plugin
+#### Add LDAP Authentication plugin
 
-1. Add plugin to `/api/private` endpoint route
+The `LDAP Authentication` plugin will be used to secure the `/api/private` endpoint.
+
+1. Add plugin to route `PRIVATE_ROUTE_ID`
 ```
-curl -X POST http://localhost:8001/routes/${PRIVATE_ROUTE_ID}/plugins \
-  -d "name=basic-auth" \
-  -d "config.hide_credentials=true"
+LDAP_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
+  -d "name=ldap-auth" \
+  -d "config.hide_credentials=true" \
+  -d "config.ldap_host=ldap-host" \
+  -d "config.ldap_port=389" \
+  -d "config.start_tls=false" \
+  -d "config.base_dn=ou=users,dc=mycompany,dc=com" \
+  -d "config.verify_ldap_host=false" \
+  -d "config.attribute=cn" \
+  -d "config.cache_ttl=60" \
+  -d "config.header_type=ldap" | jq -r '.id')
+  
+echo "LDAP_AUTH_PLUGIN_ID=$LDAP_AUTH_PLUGIN_ID"
 ```
 
-2. Try to call `/api/private` endpoint. The `/api/public` must continue working.
+> If you need to update some `LDAP Authentication` plugin configuration, run the following `PATCH` call informing
+> the field you want to update, for example:
+> ```
+> curl -X PATCH http://localhost:8001/plugins/${LDAP_AUTH_PLUGIN_ID} \
+>   -d "config.base_dn=ou=users,dc=mycompany,dc=com"
+> ```
+
+2. Try to call `/api/private` endpoint without credentials.
 ```
 curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
 ```
 
 It should return
 ```
-Code: 401
-Response Body: {"message":"Unauthorized"}
+HTTP/1.1 401 Unauthorized
+{"message":"Unauthorized"}
+```
+
+3. Call `/api/private` endpoint using Bill Gates base64 encode credentials
+```
+curl -i http://localhost:8000/api/private \
+  -H "Authorization:ldap $(echo -n 'Bill Gates':123 | base64)" \
+  -H 'Host: springboot-kong'
+```
+
+It should return
+```
+HTTP/1.1 200
+Bill Gates, it is private.
+```
+
+#### Add Basic Authentication plugin
+
+The `Basic Authentication` plugin will be used to secure the `/actuator/httptrace` endpoint
+
+1. Add plugin to route `HTTPTRACE_ROUTE_ID`
+```
+BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$HTTPTRACE_ROUTE_ID/plugins \
+  -d "name=basic-auth" \
+  -d "config.hide_credentials=true" | jq -r '.id')
+  
+echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
+```
+
+2. Try to call `/actuator/httptrace` endpoint without credentials.
+```
+curl -i http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+```
+
+It should return
+```
+HTTP/1.1 401 Unauthorized
+{"message":"Unauthorized"}
 ```
 
 3. Create a consumer
 ```
-curl -X POST http://localhost:8001/consumers \
-  -d "username=user_ivanfranchin"
+curl -X POST http://localhost:8001/consumers -d "username=ivanfranchin"
 ```
 
 4. Create a credential for consumer
 ```
-curl -X POST http://localhost:8001/consumers/user_ivanfranchin/basic-auth \
+curl -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
   -d "username=ivan.franchin" \
   -d "password=123"
 ```
 
 5. Call `/api/private` endpoint using `ivan.franchin` credential
 ```
-curl -i -u ivan.franchin:123 http://localhost:8000/api/private -H 'Host: springboot-kong'
+curl -i -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
 ```
 
 It should return
 ```
-Code: 200
-Response Body: ivan.franchin, it is private.
+HTTP/1.1 200
+{"traces":[{"timestamp":"...
 ```
 
-When a client has been authenticated, the plugin will append some headers to the request before proxying it to the
-upstream service, like: `X-Consumer-ID`, `X-Consumer-Username` and `X-Credential-Username`. For more information about
-those headers, please refer to https://getkong.org/plugins/basic-authentication. You can see those values
-using the actuator endpoint `httptrace`: http://localhost:8080/actuator/httptrace.
+6. Let's create another consumer just for testing purpose
+```
+curl -X POST http://localhost:8001/consumers -d "username=administrator"
 
-In the example above, the application controller is using the `X-Credential-Username` header to log `ivan.franchin`.
+curl -X POST http://localhost:8001/consumers/administrator/basic-auth \
+  -d "username=administrator" \
+  -d "password=123"
+```
 
 #### Add Rate Limiting plugin
 
-1. Add plugin to `springboot-kong` service
+We are going to add the following rate limits:
+- `/api/public`: 1 request a second;
+- `/api/private`: 5 requests a minute;
+- `/actuator/httptrace`: 2 requests a minute or 100 a hour.
+
+Let's set them.
+
+1. Add plugin to route `PUBLIC_ROUTE_ID`
 ```
-curl -X POST http://localhost:8001/services/springboot-kong/plugins \
+PUBLIC_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PUBLIC_ROUTE_ID/plugins \
   -d "name=rate-limiting"  \
-  -d "config.minute=5"
+  -d "config.second=1" | jq -r '.id')
+  
+echo "PUBLIC_RATE_LIMIT_PLUGIN_ID=$PUBLIC_RATE_LIMIT_PLUGIN_ID"
+```
+2. Add plugin to route `PRIVATE_ROUTE_ID`
+```
+PRIVATE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
+  -d "name=rate-limiting"  \
+  -d "config.minute=5" | jq -r '.id')
+  
+echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
 ```
 
-2. Make some calls to
+3. Add plugin to route `HTTPTRACE_ROUTE_ID`
 ```
-curl -i -u ivan.franchin:123 http://localhost:8000/api/private -H 'Host: springboot-kong'
+HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$HTTPTRACE_ROUTE_ID/plugins \
+  -d "name=rate-limiting"  \
+  -d "config.minute=2" \
+  -d "config.hour=100" | jq -r '.id')
+  
+echo "HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$HTTPTRACE_RATE_LIMIT_PLUGIN_ID"
 ```
 
-3. After exceeding 5 calls in a minute, you should see
+4. Make some calls those endpoints
+
+- Test `/api/public`
 ```
-Code: 429 Too Many Requests
-Response Body: {"message":"API rate limit exceeded"}
+curl -i http://localhost:8000/api/public -H 'Host: springboot-kong'
+```
+
+- Test `/actuator/httptrace`
+```
+curl -I -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+
+curl -I -u administrator:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+```
+
+- Test `/api/private`
+```
+curl -i http://localhost:8000/api/private \
+  -H "Authorization:ldap $(echo -n 'Bill Gates':123 | base64)" \
+  -H 'Host: springboot-kong'
+
+curl -i http://localhost:8000/api/private \
+  -H "Authorization:ldap $(echo -n 'Mark Cuban':123 | base64)" \
+  -H 'Host: springboot-kong'
+```
+
+***P.S. The rate limit is the same for Bill Gates and Mark Cuban! That's wrong!***
+
+5. After exceeding some calls in a minute, you should see
+```
+HTTP/1.1 429 Too Many Requests
+{"message":"API rate limit exceeded"}
 ```
 
 #### Add StatsD plugin
 
 1. Add plugin to `springboot-kong` service
-
-**PS. Inform the ip address of your machine in the `config.host` parameter**
 ```
 curl -X POST http://localhost:8001/services/springboot-kong/plugins \
   -d "name=statsd"  \
-  -d "config.host=${HOST_IP_ADDR}" \
+  -d "config.host=graphite-statsd" \
   -d "config.port=8125"
 ```
 
@@ -204,8 +353,8 @@ curl -X POST http://localhost:8001/services/springboot-kong/plugins \
 
 3. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
 
-![graphite](images/graphite.png)
+![graphite-statsd](images/graphite-statsd.png)
 
 ## TODO
 
-- Add LDAP authentication plugin https://docs.konghq.com/hub/kong-inc/ldap-auth/
+- add `Prometheus` plugin
