@@ -3,5 +3,11 @@ spring:
     name: springboot-kong
 
 management:
+  security:
+    enabled: false
   endpoints:
-    web.exposure.include: health, httptrace
+    web:
+      exposure.include: health, httptrace
+  endpoint:
+    health:
+      show-details: always

@@ -2,14 +2,16 @@
 
 ## Goal
 
-The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the `Basic Authentication` plugin.
-Besides, we will explore more plugins that Kong offers like: `Rate Limiting` and `StatsD` plugins.
+The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the
+`Basic Authentication` plugin. Besides, we will explore more plugins that Kong offers like: `Rate Limiting` and `StatsD`
+plugins.
 
 ## Start environment
 
-***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you machine***
+***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
+machine***
 
-Run the following script present in `springboot-kong/dev`.
+Run the following script present in `springboot-kong` project root folder.
 ```
 ./start-docker-containers
 ```
@@ -29,7 +31,7 @@ Please, refer to `Kong Admin API` https://getkong.org/docs/0.13.x/admin-api in o
 ### Pre-configuration
 
 - Open a new terminal where all `Kong` configuration commands will be executed.
-- Export the machine ip address to `HOST_IP_ADDR` environment variable.
+- Export your machine ip address to `HOST_IP_ADDR` environment variable.
 > It can be obtained by executing ifconfig command on Mac/Linux terminal or ipconfig on Windows;
 ```
 export HOST_IP_ADDR=...
@@ -53,7 +55,8 @@ curl -i -X POST http://localhost:8001/services/ \
 
 **OR** 
 
-- You can use `application/json` content type. Besides, in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used.
+- You can use `application/json` content type. Besides, in order to set `protocol`, `host`, `port` and `path` at once,
+the `url` shorthand attribute can be used.
 ```
 curl -i -X POST http://localhost:8001/services/ \
   -H 'Content-Type: application/json' \
@@ -77,7 +80,8 @@ PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kon
   -H 'Content-Type: application/json' \
   -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/api/private"], "strip_path": false }' | jq -r .id)
 ```
-Here, I am getting the `/api/private` route id. It will be used on the next steps. To see the value type `echo $PRIVATE_ROUTE_ID`
+Here, I am getting the `/api/private` route id. It will be used on the next steps. To see the value type
+`echo $PRIVATE_ROUTE_ID`
 
 In order to list all routes, run: `curl -s http://localhost:8001/routes | jq .`
 
@@ -96,7 +100,8 @@ Response Body: It is public.
 
 - `/api/private` endpoint
 
-**PS. this endpoint is not secured by the application, that is why the response is returned. The idea is to use Kong to secure it. It will be done on the next steps.**
+**PS. this endpoint is not secured by the application, that is why the response is returned. The idea is to use Kong to
+secure it. It will be done on the next steps.**
 ```
 curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
 ```
@@ -156,8 +161,10 @@ Code: 200
 Response Body: ivan.franchin, it is private.
 ```
 
-When a client has been authenticated, the plugin will append some headers to the request before proxying it to the upstream service, like : `X-Consumer-ID`, `X-Consumer-Username`, `X-Credential-Username`, etc.
-Please refer to https://getkong.org/plugins/basic-authentication for more information.
+When a client has been authenticated, the plugin will append some headers to the request before proxying it to the
+upstream service, like: `X-Consumer-ID`, `X-Consumer-Username` and `X-Credential-Username`. For more information about
+those headers, please refer to https://getkong.org/plugins/basic-authentication. You can see those values
+using the actuator endpoint `httptrace`: http://localhost:8080/actuator/httptrace.
 
 In the example above, the application controller is using the `X-Credential-Username` header to log `ivan.franchin`.
 
@@ -195,4 +202,10 @@ curl -X POST http://localhost:8001/services/springboot-kong/plugins \
 
 2. Make some requests to `springbook-kong` endpoints
 
-3. Access `Graphite-Statsd` link and check the `kong` statistics: http://localhost:8081
+3. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
+
+![graphite](images/graphite.png)
+
+## TODO
+
+- Add LDAP authentication plugin https://docs.konghq.com/hub/kong-inc/ldap-auth/
