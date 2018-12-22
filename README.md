@@ -4,7 +4,7 @@
 
 The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the
 `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that Kong offers like:
-`Rate Limiting` and `StatsD` plugins.
+`Rate Limiting`, `StatsD` and `Prometheus` plugins.
 
 ## Build springboot-kong docker image
 
@@ -15,13 +15,13 @@ mvn clean package docker:build -DskipTests
 
 ## Start environment
 
-***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
-machine***
-
 Run the following script present in `springboot-kong` project root folder.
 ```
 ./start-docker-containers
 ```
+
+> `springboot-kong` application is running in a docker container. The container does not expose any port to HOST machine.
+> So, you cannot access the application directly, forcing the user to use of Kong as gateway server to access `springboot-kong`.
 
 ## Configuring OpenLDAP
 
@@ -56,6 +56,9 @@ ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
 ```
 
 ## KONG
+
+***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
+machine***
 
 Before adding to Kong Services, Routes and Plugins, check if `Kong` it's running
 ``` 
@@ -272,7 +275,7 @@ curl -X POST http://localhost:8001/consumers/administrator/basic-auth \
 
 #### Add Rate Limiting plugin
 
-We are going to add the following rate limits:
+We are going to add the following rate limitings:
 - `/api/public`: 1 request a second;
 - `/api/private`: 5 requests a minute;
 - `/actuator/httptrace`: 2 requests a minute or 100 a hour.
@@ -331,7 +334,7 @@ curl -i http://localhost:8000/api/private \
   -H 'Host: springboot-kong'
 ```
 
-***P.S. The rate limit is the same for Bill Gates and Mark Cuban! That's wrong!***
+***P.S. The rate limiting is the same for Bill Gates and Mark Cuban! That's wrong!***
 
 5. After exceeding some calls in a minute, you should see
 ```
@@ -343,10 +346,10 @@ HTTP/1.1 429 Too Many Requests
 
 1. Add plugin to `springboot-kong` service
 ```
-curl -X POST http://localhost:8001/services/springboot-kong/plugins \
+GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/plugins \
   -d "name=statsd"  \
   -d "config.host=graphite-statsd" \
-  -d "config.port=8125"
+  -d "config.port=8125" | jq -r '.id')
 ```
 
 2. Make some requests to `springbook-kong` endpoints
@@ -355,6 +358,17 @@ curl -X POST http://localhost:8001/services/springboot-kong/plugins \
 
 ![graphite-statsd](images/graphite-statsd.png)
 
-## TODO
+#### Add Prometheus plugin
 
-- add `Prometheus` plugin
+1. Add plugin to `springboot-kong` service
+```
+GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/plugins \
+  -d "name=prometheus" | jq -r '.id')
+  
+echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
+```
+
+2. You can see some metrics
+```
+curl -i http://localhost:8001/metrics'
+```
