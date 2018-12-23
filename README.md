@@ -88,18 +88,16 @@ curl -i -X POST http://localhost:8001/services/ \
 
 ### Add routes
 
-1. One route for `/api/public` endpoint (open to everybody)
+1. One default route for the service, no specific `path` included
 ```
 PUBLIC_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
   -d "protocols[]=http" \
-  -d "hosts[]=springboot-kong" \
-  -d "paths[]=/api/public" \
-  -d "strip_path=false" | jq -r '.id')
+  -d "hosts[]=springboot-kong" | jq -r '.id')
   
 echo "PUBLIC_ROUTE_ID=$PUBLIC_ROUTE_ID"
 ```
 
-2. Another for `/api/private` endpoint (secured, only accessible by LDAP users)
+2. Another route specifically for `/api/private` endpoint (it will be secured and only accessible by LDAP users)
 ```
 PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
   -H 'Content-Type: application/json' \
@@ -108,7 +106,7 @@ PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kon
 echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
 ```
 
-3. Finally, one route for `/actuator/httptrace` endpoint (secured, only accessible by pre-defined users)
+3. Finally, one route for `/actuator/httptrace` endpoint (it will be secured and only accessible by pre-defined users)
 ```
 HTTPTRACE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
   -H 'Content-Type: application/json' \
@@ -278,7 +276,7 @@ curl -X POST http://localhost:8001/consumers/administrator/basic-auth \
 We are going to add the following rate limitings:
 - `/api/public`: 1 request a second;
 - `/api/private`: 5 requests a minute;
-- `/actuator/httptrace`: 2 requests a minute or 100 a hour.
+- `/actuator/httptrace`: 2 requests a minute or 100 requests an hour.
 
 Let's set them.
 
@@ -314,6 +312,8 @@ echo "HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$HTTPTRACE_RATE_LIMIT_PLUGIN_ID"
 - Test `/api/public`
 ```
 curl -i http://localhost:8000/api/public -H 'Host: springboot-kong'
+
+curl -i http://localhost:8000/actuator/health -H 'Host: springboot-kong'
 ```
 
 - Test `/actuator/httptrace`
@@ -350,6 +350,8 @@ GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/sprin
   -d "name=statsd"  \
   -d "config.host=graphite-statsd" \
   -d "config.port=8125" | jq -r '.id')
+  
+echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 ```
 
 2. Make some requests to `springbook-kong` endpoints
@@ -370,5 +372,5 @@ echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 
 2. You can see some metrics
 ```
-curl -i http://localhost:8001/metrics'
+curl -i http://localhost:8001/metrics
 ```
