@@ -23,7 +23,29 @@ Run the following script present in `springboot-kong` project root folder.
 > `springboot-kong` application is running in a docker container. The container does not expose any port to HOST machine.
 > So, you cannot access the application directly, forcing the user to use of Kong as gateway server to access `springboot-kong`.
 
-## Configuring OpenLDAP
+## Import OpenLDAP Users
+
+The LDIF file that we will use, `/springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for
+mycompany.com. Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and
+Ivan Franchin). Besides, it is defined that Bill Gates, Steve Jobs and Mark Cuban belong to developers group and Ivan
+Franchin belongs to admin group.
+```
+Bill Gates > username: bgates, password: 123
+Steve Jobs > username: sjobs, password: 123
+Mark Cuban > username: mcuban, password: 123
+Ivan Franchin > username: ifranchin, password: 123
+```
+
+There are two ways to import those users: just running a script or through `phpldapadmin`
+
+#### Import users with script
+
+- In a terminal, inside `/springboot-kong` root folder run
+```
+./import-openldap-users.sh.sh
+```
+
+#### Import Users with phpldapadmin
 
 ![openldap](images/openldap.png)
 
@@ -35,19 +57,11 @@ Login DN: cn=admin,dc=mycompany,dc=com
 Password: admin
 ```
 
-3. Import the file `/springboot-kong/ldap/ldap-mycompany-com.ldif`
+3. Import the file `/springboot-kong/ldap/ldap-mycompany-com.ldif` 
 
-This file has already a pre-defined structure for mycompany.com.
-Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and Ivan Franchin).
-Besides, it is defined that Bill Gates, Steve Jobs and Mark Cuban belong to developers group and Ivan Franchin belongs to admin group.
-```
-Bill Gates > username: bgates, password: 123
-Steve Jobs > username: sjobs, password: 123
-Mark Cuban > username: mcuban, password: 123
-Ivan Franchin > username: ifranchin, password: 123
-```
+#### Check Users Imported
 
-4. In a terminal, you can test OpenLDAP
+In a terminal, you can test ldap configuration using `ldapsearch`
 ```
 ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
   -w admin -H ldap://localhost:389 \
