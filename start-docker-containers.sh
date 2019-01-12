@@ -33,7 +33,7 @@ docker run -d \
   -p 2023-2024:2023-2024 \
   -p 8125:8125/udp \
   -p 8126:8126 \
-  graphiteapp/graphite-statsd:1.1.4-10
+  graphiteapp/graphite-statsd:1.1.5-3
 
 echo "Starting kong-database container"
 docker run -d \
@@ -43,7 +43,7 @@ docker run -d \
   -p 5432:5432 \
   -e "POSTGRES_USER=kong" \
   -e "POSTGRES_DB=kong" \
-  postgres:11.0
+  postgres:11.1
 
 sleep 5
 
@@ -61,7 +61,7 @@ docker run --rm \
   --network=springboot-kong-net \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
-  kong:0.14.1 kong migrations up
+  kong:1.0.0 kong migrations bootstrap
 
 sleep 3
 
@@ -82,7 +82,7 @@ docker run -d \
   -p 8443:8443 \
   -p 8001:8001 \
   -p 8444:8444 \
-  kong:0.14.1
+  kong:1.0.0
 
 echo "-------------------------------------------"
 echo "Containers started!"

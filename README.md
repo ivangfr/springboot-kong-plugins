@@ -40,9 +40,9 @@ There are two ways to import those users: just running a script or through `phpl
 
 #### Import users with script
 
-- In a terminal, inside `/springboot-kong` root folder run
+- In a new terminal, inside `/springboot-kong` root folder run
 ```
-./import-openldap-users.sh.sh
+./import-openldap-users.sh
 ```
 
 #### Import Users with phpldapadmin
