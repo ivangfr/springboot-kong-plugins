@@ -17,7 +17,7 @@ mvn clean package docker:build -DskipTests
 
 Run the following script present in `springboot-kong` project root folder.
 ```
-./start-docker-containers
+./start-docker-containers.sh
 ```
 
 > `springboot-kong` application is running in a docker container. The container does not expose any port to HOST machine.
@@ -255,14 +255,18 @@ HTTP/1.1 401 Unauthorized
 
 3. Create a consumer
 ```
-curl -X POST http://localhost:8001/consumers -d "username=ivanfranchin"
+IFRANCHIN_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=ivanfranchin" | jq -r '.id')
+
+echo "IFRANCHIN_CONSUMER_ID=$IFRANCHIN_CONSUMER_ID"
 ```
 
 4. Create a credential for consumer
 ```
-curl -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
+IFRANCHIN_CREDENTIAL_ID2=$(curl -s -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
   -d "username=ivan.franchin" \
-  -d "password=123"
+  -d "password=123" | jq -r '.id')
+  
+echo "IFRANCHIN_CREDENTIAL_ID2=$IFRANCHIN_CREDENTIAL_ID2"
 ```
 
 5. Call `/api/private` endpoint using `ivan.franchin` credential
@@ -278,11 +282,15 @@ HTTP/1.1 200
 
 6. Let's create another consumer just for testing purpose
 ```
-curl -X POST http://localhost:8001/consumers -d "username=administrator"
+ADMINISTRATOR_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=administrator" | jq -r '.id')
 
-curl -X POST http://localhost:8001/consumers/administrator/basic-auth \
+echo "ADMINISTRATOR_CONSUMER_ID=$ADMINISTRATOR_CONSUMER_ID"
+
+ADMINISTRATOR_CREDENTIAL_ID=$(curl -s -X POST http://localhost:8001/consumers/administrator/basic-auth \
   -d "username=administrator" \
-  -d "password=123"
+  -d "password=123" | jq -r '.id')
+  
+echo "ADMINISTRATOR_CREDENTIAL_ID=$ADMINISTRATOR_CREDENTIAL_ID"
 ```
 
 #### Add Rate Limiting plugin
