@@ -1,19 +1,17 @@
-# springboot-kong
-
-## Goal
+# `springboot-kong`
 
 The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the
 `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that Kong offers like:
 `Rate Limiting`, `StatsD` and `Prometheus` plugins.
 
-## Build springboot-kong docker image
+# Build application docker image
 
 In `/springboot-kong` root folder, run
 ```
 mvn clean package docker:build -DskipTests
 ``` 
 
-## Start environment
+# Start environment
 
 Run the following script present in `springboot-kong` project root folder.
 ```
@@ -21,12 +19,12 @@ Run the following script present in `springboot-kong` project root folder.
 ```
 
 > `springboot-kong` application is running in a docker container. The container does not expose any port to HOST machine.
-> So, you cannot access the application directly, forcing the user to use of Kong as gateway server to access `springboot-kong`.
+> So, the application cannot be accessed directly, forcing the caller to use of `Kong` as gateway server to access it.
 
-## Import OpenLDAP Users
+# Import OpenLDAP Users
 
-The LDIF file that we will use, `/springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for
-mycompany.com. Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and
+The `LDIF` file that we will use, `/springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for
+`mycompany.com`. Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and
 Ivan Franchin). Besides, it is defined that Bill Gates, Steve Jobs and Mark Cuban belong to developers group and Ivan
 Franchin belongs to admin group.
 ```
@@ -38,14 +36,14 @@ Ivan Franchin > username: ifranchin, password: 123
 
 There are two ways to import those users: just running a script or through `phpldapadmin`
 
-#### Import users with script
+### Import users with script
 
 - In a new terminal, inside `/springboot-kong` root folder run
 ```
 ./import-openldap-users.sh
 ```
 
-#### Import Users with phpldapadmin
+### Import users with phpldapadmin
 
 ![openldap](images/openldap.png)
 
@@ -59,7 +57,7 @@ Password: admin
 
 3. Import the file `/springboot-kong/ldap/ldap-mycompany-com.ldif` 
 
-#### Check Users Imported
+### Check users Imported
 
 In a terminal, you can test ldap configuration using `ldapsearch`
 ```
@@ -69,7 +67,7 @@ ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
   -s sub "(uid=*)"
 ```
 
-## KONG
+# KONG
 
 ***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
 machine***
@@ -79,7 +77,7 @@ Before adding to Kong Services, Routes and Plugins, check if `Kong` it's running
 curl -I http://localhost:8001
 ```
 
-### Add Service
+## Add Service
 
 - Using `application/x-www-form-urlencoded` content type
 ```
@@ -100,7 +98,7 @@ curl -i -X POST http://localhost:8001/services/ \
   -d '{ "name": "springboot-kong", "url":"http://springboot-kong:8080" }'
 ```
 
-### Add routes
+## Add routes
 
 1. One default route for the service, no specific `path` included
 ```
@@ -131,7 +129,7 @@ echo "HTTPTRACE_ROUTE_ID=$HTTPTRACE_ROUTE_ID"
 
 > In order to list all `springboot-kong` routes, run: `curl -s http://localhost:8001/services/springboot-kong/routes | jq .`
 
-### Call endpoints
+## Call endpoints
 
 1. `/api/public` endpoint
 ```
@@ -172,12 +170,12 @@ HTTP/1.1 200
 **PS. again, as happened previously with `/api/private`, `/actuator/httptrace` endpoint is not secured by the application.
 We will use Kong to secure it on the next steps.**
 
-### Plugins
+## Plugins
 
 In this project, we are going to add those plugins: `LDAP Authentication`, `Rate Limiting`, `StatsD` and `Basic Authentication`.
 Please refer to https://konghq.com/plugins for more plugins.
 
-#### Add LDAP Authentication plugin
+### Add LDAP Authentication plugin
 
 The `LDAP Authentication` plugin will be used to secure the `/api/private` endpoint.
 
@@ -229,7 +227,7 @@ HTTP/1.1 200
 Bill Gates, it is private.
 ```
 
-#### Add Basic Authentication plugin
+### Add Basic Authentication plugin
 
 The `Basic Authentication` plugin will be used to secure the `/actuator/httptrace` endpoint
 
@@ -293,7 +291,7 @@ ADMINISTRATOR_CREDENTIAL_ID=$(curl -s -X POST http://localhost:8001/consumers/ad
 echo "ADMINISTRATOR_CREDENTIAL_ID=$ADMINISTRATOR_CREDENTIAL_ID"
 ```
 
-#### Add Rate Limiting plugin
+### Add Rate Limiting plugin
 
 We are going to add the following rate limitings:
 - `/api/public`: 1 request a second;
@@ -364,7 +362,7 @@ HTTP/1.1 429 Too Many Requests
 {"message":"API rate limit exceeded"}
 ```
 
-#### Add StatsD plugin
+### Add StatsD plugin
 
 1. Add plugin to `springboot-kong` service
 ```
@@ -382,7 +380,7 @@ echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 
 ![graphite-statsd](images/graphite-statsd.png)
 
-#### Add Prometheus plugin
+### Add Prometheus plugin
 
 1. Add plugin to `springboot-kong` service
 ```
@@ -396,3 +394,7 @@ echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 ```
 curl -i http://localhost:8001/metrics
 ```
+
+# Issues
+
+- [Same Rate Limit counting is used by two different LDAP users #4129](https://github.com/Kong/kong/issues/4129)
