@@ -8,7 +8,7 @@ The goal of this project is to create a simple REST API and securing it with [`K
 
 In `/springboot-kong` root folder, run
 ```
-mvn clean package docker:build -DskipTests
+./mvnw clean package docker:build -DskipTests
 ``` 
 
 # Start environment
