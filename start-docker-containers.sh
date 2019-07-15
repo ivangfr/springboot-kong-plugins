@@ -6,12 +6,12 @@
 echo "Creating network"
 docker network create springboot-kong-net
 
-echo "Starting springboot-kong container"
+echo "Starting simple-service container"
 docker run -d \
-  --name springboot-kong \
+  --name simple-service \
   --network=springboot-kong-net \
   --restart=unless-stopped \
-  docker.mycompany.com/springboot-kong:latest
+  docker.mycompany.com/simple-service:1.0.0
 
 echo "Starting ldap-host"
 docker run -d \
@@ -21,7 +21,7 @@ docker run -d \
   -p 389:389 \
   -e "LDAP_ORGANISATION=MyCompany Inc." \
   -e "LDAP_DOMAIN=mycompany.com" \
-  osixia/openldap:1.2.2
+  osixia/openldap:1.2.4
 
 echo "Starting graphite-statsd"
 docker run -d \
@@ -33,7 +33,7 @@ docker run -d \
   -p 2023-2024:2023-2024 \
   -p 8125:8125/udp \
   -p 8126:8126 \
-  graphiteapp/graphite-statsd:1.1.5-3
+  graphiteapp/graphite-statsd:1.1.5-12
 
 echo "Starting kong-database container"
 docker run -d \
@@ -43,7 +43,7 @@ docker run -d \
   -p 5432:5432 \
   -e "POSTGRES_USER=kong" \
   -e "POSTGRES_DB=kong" \
-  postgres:11.1
+  postgres:11.4
 
 sleep 5
 
@@ -54,14 +54,14 @@ docker run -d \
   --restart=unless-stopped \
   -p 6443:443 \
   -e "PHPLDAPADMIN_LDAP_HOSTS=ldap-host" \
-  osixia/phpldapadmin:0.7.2
+  osixia/phpldapadmin:0.8.0
 
 echo "Running kong-database migration"
 docker run --rm \
   --network=springboot-kong-net \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
-  kong:1.0.0 kong migrations bootstrap
+  kong:1.2.1 kong migrations bootstrap
 
 sleep 3
 
@@ -82,7 +82,7 @@ docker run -d \
   -p 8443:8443 \
   -p 8001:8001 \
   -p 8444:8444 \
-  kong:1.0.0
+  kong:1.2.1
 
 echo "-------------------------------------------"
 echo "Containers started!"
@@ -98,7 +98,7 @@ while true; do
 done
 
 echo "Removing containers"
-docker rm -fv springboot-kong graphite-statsd kong-database kong phpldapadmin-service ldap-host
+docker rm -fv simple-service graphite-statsd kong-database kong phpldapadmin-service ldap-host
 
 echo "Removing network"
 docker network rm springboot-kong-net

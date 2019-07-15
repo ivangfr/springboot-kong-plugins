@@ -4,29 +4,37 @@ The goal of this project is to create a simple REST API and securing it with [`K
 `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that Kong offers like:
 `Rate Limiting`, `StatsD` and `Prometheus` plugins.
 
-# Build application docker image
+## Microservice
 
-In `/springboot-kong` root folder, run
+### simple-service
+
+Spring-Boot Java Web application that exposes two endpoints:
+- `/api/public`: endpoint that can be access by anyone, it is not secured;
+- `/api/private`: endpoint that must be accessed only by authenticated users.
+
+## Build simple-service Docker Image
+
+In `springboot-kong` root folder, run
 ```
-./mvnw clean package docker:build -DskipTests
+./mvnw clean package dockerfile:build -DskipTests --projects simple-service
 ``` 
 
-# Start environment
+## Start environment
 
 Run the following script present in `springboot-kong` project root folder.
 ```
 ./start-docker-containers.sh
 ```
 
-> `springboot-kong` application is running in a docker container. The container does not expose any port to HOST machine.
+> `simple-service` application is running in a docker container. The container does not expose any port to HOST machine.
 > So, the application cannot be accessed directly, forcing the caller to use of `Kong` as gateway server to access it.
 
-# Import OpenLDAP Users
+## Import OpenLDAP Users
 
-The `LDIF` file that we will use, `/springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for
-`mycompany.com`. Basically, it has 2 groups (developers and admin) and 4 users (Bill Gates, Steve Jobs, Mark Cuban and
-Ivan Franchin). Besides, it is defined that Bill Gates, Steve Jobs and Mark Cuban belong to developers group and Ivan
-Franchin belongs to admin group.
+The `LDIF` file that we will use, `springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for
+`mycompany.com`. Basically, it has 2 groups (`developers` and `admin`) and 4 users (`Bill Gates`, `Steve Jobs`, `Mark Cuban`
+and `Ivan Franchin`). Besides, it is defined that `Bill Gates`, `Steve Jobs` and `Mark Cuban` belong to `developers` group
+and `Ivan Franchin` belongs to `admin` group.
 ```
 Bill Gates > username: bgates, password: 123
 Steve Jobs > username: sjobs, password: 123
@@ -38,7 +46,7 @@ There are two ways to import those users: just running a script or through `phpl
 
 ### Import users with script
 
-- In a new terminal, inside `/springboot-kong` root folder run
+In a new terminal, inside `springboot-kong` root folder run
 ```
 ./import-openldap-users.sh
 ```
@@ -55,7 +63,7 @@ Login DN: cn=admin,dc=mycompany,dc=com
 Password: admin
 ```
 
-3. Import the file `/springboot-kong/ldap/ldap-mycompany-com.ldif` 
+3. Import the file `springboot-kong/ldap/ldap-mycompany-com.ldif` 
 
 ### Check users Imported
 
@@ -67,7 +75,7 @@ ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
   -s sub "(uid=*)"
 ```
 
-# KONG
+## KONG
 
 ***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
 machine***
@@ -77,63 +85,63 @@ Before adding to Kong Services, Routes and Plugins, check if `Kong` it's running
 curl -I http://localhost:8001
 ```
 
-## Add Service
+### Add Service
 
-- Using `application/x-www-form-urlencoded` content type
+Using `application/x-www-form-urlencoded` content type
 ```
 curl -i -X POST http://localhost:8001/services/ \
-  -d "name=springboot-kong" \
+  -d "name=simple-service" \
   -d "protocol=http" \
-  -d "host=springboot-kong" \
+  -d "host=simple-service" \
   -d "port=8080"
 ```
 
 **OR** 
 
-- You can use `application/json` content type. Besides, in order to set `protocol`, `host`, `port` and `path` at once,
+You can use `application/json` content type. Besides, in order to set `protocol`, `host`, `port` and `path` at once,
 the `url` shorthand attribute can be used.
 ```
 curl -i -X POST http://localhost:8001/services/ \
   -H 'Content-Type: application/json' \
-  -d '{ "name": "springboot-kong", "url":"http://springboot-kong:8080" }'
+  -d '{ "name": "simple-service", "url":"http://simple-service:8080" }'
 ```
 
-## Add routes
+### Add routes
 
 1. One default route for the service, no specific `path` included
 ```
-PUBLIC_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
+PUBLIC_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
   -d "protocols[]=http" \
-  -d "hosts[]=springboot-kong" | jq -r '.id')
+  -d "hosts[]=simple-service" | jq -r '.id')
   
 echo "PUBLIC_ROUTE_ID=$PUBLIC_ROUTE_ID"
 ```
 
 2. Another route specifically for `/api/private` endpoint (it will be secured and only accessible by LDAP users)
 ```
-PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
+PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
   -H 'Content-Type: application/json' \
-  -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/api/private"], "strip_path": false }' | jq -r '.id')
+  -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/api/private"], "strip_path": false }' | jq -r '.id')
 
 echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
 ```
 
 3. Finally, one route for `/actuator/httptrace` endpoint (it will be secured and only accessible by pre-defined users)
 ```
-HTTPTRACE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/routes/ \
+HTTPTRACE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
   -H 'Content-Type: application/json' \
-  -d '{ "protocols": ["http"], "hosts": ["springboot-kong"], "paths": ["/actuator/httptrace"], "strip_path": false }' | jq -r '.id')
+  -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/httptrace"], "strip_path": false }' | jq -r '.id')
 
 echo "HTTPTRACE_ROUTE_ID=$HTTPTRACE_ROUTE_ID"
 ```
 
-> In order to list all `springboot-kong` routes, run: `curl -s http://localhost:8001/services/springboot-kong/routes | jq .`
+> In order to list all `simple-service` routes, run: `curl -s http://localhost:8001/services/simple-service/routes | jq .`
 
-## Call endpoints
+### Call endpoints
 
 1. `/api/public` endpoint
 ```
-curl -i http://localhost:8000/api/public -H 'Host: springboot-kong'
+curl -i http://localhost:8000/api/public -H 'Host: simple-service'
 ```
 
 It should return
@@ -144,7 +152,7 @@ It is public.
 
 2. `/api/private` endpoint
 ```
-curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
+curl -i http://localhost:8000/api/private -H 'Host: simple-service'
 ```
 
 It should return
@@ -158,7 +166,7 @@ secure it. It will be done on the next steps.**
 
 3. `/actuator/httptrace` endpoint
 ```
-curl -i http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+curl -i http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
 ```
 
 It should return
@@ -205,7 +213,7 @@ echo "LDAP_AUTH_PLUGIN_ID=$LDAP_AUTH_PLUGIN_ID"
 
 2. Try to call `/api/private` endpoint without credentials.
 ```
-curl -i http://localhost:8000/api/private -H 'Host: springboot-kong'
+curl -i http://localhost:8000/api/private -H 'Host: simple-service'
 ```
 
 It should return
@@ -218,7 +226,7 @@ HTTP/1.1 401 Unauthorized
 ```
 curl -i http://localhost:8000/api/private \
   -H "Authorization:ldap $(echo -n 'Bill Gates':123 | base64)" \
-  -H 'Host: springboot-kong'
+  -H 'Host: simple-service'
 ```
 
 It should return
@@ -242,7 +250,7 @@ echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
 
 2. Try to call `/actuator/httptrace` endpoint without credentials.
 ```
-curl -i http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+curl -i http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
 ```
 
 It should return
@@ -269,7 +277,7 @@ echo "IFRANCHIN_CREDENTIAL_ID2=$IFRANCHIN_CREDENTIAL_ID2"
 
 5. Call `/api/private` endpoint using `ivan.franchin` credential
 ```
-curl -i -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+curl -i -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
 ```
 
 It should return
@@ -331,27 +339,27 @@ echo "HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$HTTPTRACE_RATE_LIMIT_PLUGIN_ID"
 
 - Test `/api/public`
 ```
-curl -i http://localhost:8000/api/public -H 'Host: springboot-kong'
+curl -i http://localhost:8000/api/public -H 'Host: simple-service'
 
-curl -i http://localhost:8000/actuator/health -H 'Host: springboot-kong'
+curl -i http://localhost:8000/actuator/health -H 'Host: simple-service'
 ```
 
 - Test `/actuator/httptrace`
 ```
-curl -I -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+curl -I -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
 
-curl -I -u administrator:123 http://localhost:8000/actuator/httptrace -H 'Host: springboot-kong'
+curl -I -u administrator:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
 ```
 
 - Test `/api/private`
 ```
 curl -i http://localhost:8000/api/private \
   -H "Authorization:ldap $(echo -n 'Bill Gates':123 | base64)" \
-  -H 'Host: springboot-kong'
+  -H 'Host: simple-service'
 
 curl -i http://localhost:8000/api/private \
   -H "Authorization:ldap $(echo -n 'Mark Cuban':123 | base64)" \
-  -H 'Host: springboot-kong'
+  -H 'Host: simple-service'
 ```
 
 ***P.S. The rate limiting is the same for Bill Gates and Mark Cuban! That's wrong!***
@@ -364,9 +372,9 @@ HTTP/1.1 429 Too Many Requests
 
 ### Add StatsD plugin
 
-1. Add plugin to `springboot-kong` service
+1. Add plugin to `simple-service`
 ```
-GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/plugins \
+GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/plugins \
   -d "name=statsd"  \
   -d "config.host=graphite-statsd" \
   -d "config.port=8125" | jq -r '.id')
@@ -374,7 +382,7 @@ GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/sprin
 echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 ```
 
-2. Make some requests to `springbook-kong` endpoints
+2. Make some requests to `simple-service` endpoints
 
 3. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
 
@@ -382,9 +390,9 @@ echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 
 ### Add Prometheus plugin
 
-1. Add plugin to `springboot-kong` service
+1. Add plugin to `simple-service`
 ```
-GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/springboot-kong/plugins \
+GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/plugins \
   -d "name=prometheus" | jq -r '.id')
   
 echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
@@ -395,6 +403,6 @@ echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
 curl -i http://localhost:8001/metrics
 ```
 
-# Issues
+## Issues
 
 - [Same Rate Limit counting is used by two different LDAP users #4129](https://github.com/Kong/kong/issues/4129)
