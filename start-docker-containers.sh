@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# In this project we are using `Postgres` database for Kong. Another option is `Cassandra`.
+# In this project we are using `Postgres` database for `Kong`. Another option is `Cassandra`.
 # If you'd like to use Cassandra, please refer to https://getkong.org/install/docker
 
 echo "Creating network"
@@ -21,7 +21,7 @@ docker run -d \
   -p 389:389 \
   -e "LDAP_ORGANISATION=MyCompany Inc." \
   -e "LDAP_DOMAIN=mycompany.com" \
-  osixia/openldap:1.2.4
+  osixia/openldap:1.3.0
 
 echo "Starting graphite-statsd"
 docker run -d \
@@ -33,7 +33,7 @@ docker run -d \
   -p 2023-2024:2023-2024 \
   -p 8125:8125/udp \
   -p 8126:8126 \
-  graphiteapp/graphite-statsd:1.1.5-12
+  graphiteapp/graphite-statsd:1.1.6-1
 
 echo "Starting kong-database container"
 docker run -d \
@@ -43,7 +43,7 @@ docker run -d \
   -p 5432:5432 \
   -e "POSTGRES_USER=kong" \
   -e "POSTGRES_DB=kong" \
-  postgres:11.4
+  postgres:12.0
 
 sleep 5
 
@@ -54,14 +54,14 @@ docker run -d \
   --restart=unless-stopped \
   -p 6443:443 \
   -e "PHPLDAPADMIN_LDAP_HOSTS=ldap-host" \
-  osixia/phpldapadmin:0.8.0
+  osixia/phpldapadmin:0.9.0
 
 echo "Running kong-database migration"
 docker run --rm \
   --network=springboot-kong-net \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
-  kong:1.2.1 kong migrations bootstrap
+  kong:1.4.0 kong migrations bootstrap
 
 sleep 3
 
@@ -82,7 +82,7 @@ docker run -d \
   -p 8443:8443 \
   -p 8001:8001 \
   -p 8444:8444 \
-  kong:1.2.1
+  kong:1.4.0
 
 echo "-------------------------------------------"
 echo "Containers started!"

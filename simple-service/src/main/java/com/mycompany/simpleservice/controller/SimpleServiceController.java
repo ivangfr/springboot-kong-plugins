@@ -18,7 +18,7 @@ public class SimpleServiceController {
     @GetMapping("/private")
     public String getPrivateString(HttpServletRequest request) {
         String username = request.getHeader("X-Credential-Username");
-        return String.format("%s, it is private.\n", username);
+        return username + ", it is private.\n";
     }
 
 }

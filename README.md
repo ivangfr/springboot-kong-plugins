@@ -1,33 +1,33 @@
 # `springboot-kong`
 
-The goal of this project is to create a simple REST API and securing it with [`Kong`](https://getkong.org) using the
-`LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that Kong offers like:
-`Rate Limiting`, `StatsD` and `Prometheus` plugins.
+The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/)
+REST API and securing it with [`Kong`](https://getkong.org) using the `LDAP Authentication` and `Basic Authentication`
+plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `StatsD` and `Prometheus` plugins.
 
-## Microservice
+## Application
 
 ### simple-service
 
-Spring-Boot Java Web application that exposes two endpoints:
-- `/api/public`: endpoint that can be access by anyone, it is not secured;
-- `/api/private`: endpoint that must be accessed only by authenticated users.
+`Spring Boot` Java Web application that exposes two endpoints:
+- `/api/public`: that can be access by anyone, it is not secured;
+- `/api/private`: that must be accessed only by authenticated users.
 
 ## Build simple-service Docker Image
 
-In `springboot-kong` root folder, run
+Open a terminal and inside `springboot-kong` root folder, run
 ```
 ./mvnw clean package dockerfile:build -DskipTests --projects simple-service
 ``` 
 
 ## Start environment
 
-Run the following script present in `springboot-kong` project root folder.
+In a terminal and inside `springboot-kong` root folder, run the following script
 ```
 ./start-docker-containers.sh
 ```
 
 > `simple-service` application is running in a docker container. The container does not expose any port to HOST machine.
-> So, the application cannot be accessed directly, forcing the caller to use of `Kong` as gateway server to access it.
+> So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server to access it.
 
 ## Import OpenLDAP Users
 
@@ -42,20 +42,20 @@ Mark Cuban > username: mcuban, password: 123
 Ivan Franchin > username: ifranchin, password: 123
 ```
 
-There are two ways to import those users: just running a script or through `phpldapadmin`
+There are two ways to import those users: by running a script or using `phpldapadmin`
 
-### Import users with script
+### Import users running a script
 
-In a new terminal, inside `springboot-kong` root folder run
+In a new terminal and inside `springboot-kong` root folder run
 ```
 ./import-openldap-users.sh
 ```
 
-### Import users with phpldapadmin
+### Import users using phpldapadmin
 
 ![openldap](images/openldap.png)
 
-1. Access the link: https://localhost:6443
+1. Access https://localhost:6443
 
 2. Login with the credentials
 ```
@@ -75,12 +75,12 @@ ldapsearch -x -D "cn=admin,dc=mycompany,dc=com" \
   -s sub "(uid=*)"
 ```
 
-## KONG
+## Kong
 
-***Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
-machine***
+> Note. In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you
+machine
 
-Before adding to Kong Services, Routes and Plugins, check if `Kong` it's running
+Before adding `Kong` Services, Routes and Plugins, check if `Kong` it's running
 ``` 
 curl -I http://localhost:8001
 ```
@@ -161,8 +161,8 @@ HTTP/1.1 200
 null, it is private.
 ```
 
-**PS. this endpoint is not secured by the application, that is why the response is returned. The idea is to use Kong to
-secure it. It will be done on the next steps.**
+> Note. This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong`
+> to secure it. It will be done on the next steps.
 
 3. `/actuator/httptrace` endpoint
 ```
@@ -175,8 +175,8 @@ HTTP/1.1 200
 {"traces":[{"timestamp":"...
 ```
 
-**PS. again, as happened previously with `/api/private`, `/actuator/httptrace` endpoint is not secured by the application.
-We will use Kong to secure it on the next steps.**
+> Note. Again, as happened previously with `/api/private`, `/actuator/httptrace` endpoint is not secured by the application.
+We will use `Kong` to secure it on the next steps.
 
 ## Plugins
 
