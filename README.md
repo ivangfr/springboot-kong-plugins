@@ -1,4 +1,4 @@
-# `springboot-kong`
+# springboot-kong
 
 The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://getkong.org) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `Prometheus` and `StatsD` plugins.
 
@@ -355,7 +355,7 @@ We are going to add the following rate limitings:
        -H 'Host: simple-service'
      ```
 
-     ***[BUG](https://github.com/Kong/kong/issues/4129) The rate limiting is the same for Bill Gates and Mark Cuban! That's wrong!***
+     **[BUG](https://github.com/Kong/kong/issues/4129) The rate limiting is the same for Bill Gates and Mark Cuban! That's wrong!**
 
 1. After exceeding some calls in a minute, you should see
    ```
