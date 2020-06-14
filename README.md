@@ -10,13 +10,18 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
    - `/api/public`: that can be access by anyone, it is not secured;
    - `/api/private`: that must be accessed only by authenticated users.
 
+## Prerequisites
+
+- `Java 11+`
+- `Docker`
+
 ## Build application Docker Image
 
 - Open a terminal and navigate to `springboot-kong` root folder
 
 - Run the command below to build `simple-service` Docker Image
   ```
-  ./mvnw clean package dockerfile:build -DskipTests --projects simple-service
+  ./mvnw clean compile jib:dockerBuild --projects simple-service
   ``` 
 
 ## Start environment
@@ -27,7 +32,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   ./start-docker-containers.sh
   ```
-  > **Note:** `simple-service` application is running in a docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
+  > **Note:** `simple-service` application is running as a docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
 
 ## Import OpenLDAP Users
 
