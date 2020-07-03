@@ -2,6 +2,10 @@
 
 The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://getkong.org) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `Prometheus` and `StatsD` plugins.
 
+## Project Diagram
+
+![project-diagram](images/project-diagram.png)
+
 ## Application
 
 - **simple-service**
@@ -12,8 +16,8 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Prerequisites
 
-- `Java 11+`
-- `Docker`
+- [`Java 11+`](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)
+- [`Docker`](https://www.docker.com/)
 
 ## Build application Docker Image
 
