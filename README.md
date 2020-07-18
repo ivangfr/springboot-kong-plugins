@@ -364,8 +364,6 @@ We are going to add the following rate limitings:
        -H 'Host: simple-service'
      ```
 
-     **[BUG](https://github.com/Kong/kong/issues/4129) The rate limiting is the same for Bill Gates and Mark Cuban! That's wrong!**
-
 1. After exceeding some calls in a minute, you should see
    ```
    HTTP/1.1 429 Too Many Requests
@@ -404,7 +402,3 @@ We are going to add the following rate limitings:
 1. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
 
    ![graphite-statsd](images/graphite-statsd.png)
-
-## Issues
-
-- [Same Rate Limit counting is used by two different LDAP users #4129](https://github.com/Kong/kong/issues/4129)

@@ -63,7 +63,7 @@ docker run --rm \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kong" \
-  kong:2.0.4 kong migrations bootstrap
+  kong:2.1.0-rc.1 kong migrations bootstrap
 
 sleep 3
 
@@ -85,7 +85,7 @@ docker run -d \
   -p 8443:8443 \
   -p 8001:8001 \
   -p 8444:8444 \
-  kong:2.0.4
+  kong:2.1.0-rc.1
 
 echo "-------------------------------------------"
 echo "Containers started!"
