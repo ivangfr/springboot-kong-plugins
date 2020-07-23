@@ -8,7 +8,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Application
 
-- **simple-service**
+- ### simple-service
 
   `Spring Boot` Java Web application that exposes two endpoints:
    - `/api/public`: that can be access by anyone, it is not secured;
@@ -18,6 +18,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 - [`Java 11+`](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)
 - [`Docker`](https://www.docker.com/)
+- [`jq`](https://stedolan.github.io/jq)
 
 ## Build application Docker Image
 
@@ -52,7 +53,7 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 ### Import users running a script
 
-- In a terminal, make use you are in `springboot-kong` root folder
+- In another terminal, make use you are in `springboot-kong` root folder
 
 - Run the following script
   ```
@@ -85,12 +86,19 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 ## Kong
 
-> **Note:** In order to run some commands/scripts, you must have [`jq`](https://stedolan.github.io/jq) installed on you machine
+In order to configure `Kong`, you need to go to a terminal.
 
-Before adding `Kong` Services, Routes and Plugins, in a terminal, check if `Kong` it's running
-```
-curl -I http://localhost:8001
-```
+### Check Status
+
+- Before starting adding `Kong` Services, Routes and Plugins, check if it's running by executing the following command
+  ```
+  curl -I http://localhost:8001
+  ```
+
+  It should return
+  ```
+  HTTP/1.1 200 OK
+  ```
 
 ### Add Service
 
@@ -187,7 +195,7 @@ curl -I http://localhost:8001
 
 ## Plugins
 
-In this project, we are going to add those plugins: `LDAP Authentication`, `Rate Limiting`, `StatsD` and `Basic Authentication`. Please refer to https://konghq.com/plugins for more.
+In this project, we are going to add those plugins: `LDAP Authentication`, `Basic Authentication`, `Rate Limiting`, `Prometheus` and `StatsD`. Please refer to https://konghq.com/plugins for more.
 
 ### Add LDAP Authentication plugin
 
@@ -402,3 +410,7 @@ We are going to add the following rate limitings:
 1. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
 
    ![graphite-statsd](images/graphite-statsd.png)
+
+## Shutdown
+
+Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
