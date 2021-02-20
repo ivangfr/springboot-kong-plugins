@@ -41,7 +41,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Import OpenLDAP Users
 
-The `LDIF` file that we will use, `springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for `mycompany.com`. Basically, it has 2 groups (`developers` and `admin`) and 4 users (`Bill Gates`, `Steve Jobs`, `Mark Cuban` and `Ivan Franchin`). Besides, it is defined that `Bill Gates`, `Steve Jobs` and `Mark Cuban` belong to `developers` group and `Ivan Franchin` belongs to `admin` group.
+The `LDIF` file that we will use, `springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for `mycompany.com`. Basically, it has 2 groups (`developers` and `admin`) and 4 users (`Bill Gates`, `Steve Jobs`, `Mark Cuban` and `Ivan Franchin`). Besides, it's defined that `Bill Gates`, `Steve Jobs` and `Mark Cuban` belong to `developers` group and `Ivan Franchin` belongs to `admin` group.
 ```
 Bill Gates > username: bgates, password: 123
 Steve Jobs > username: sjobs, password: 123
@@ -195,7 +195,7 @@ In order to configure `Kong`, you need to go to a terminal.
 
 ## Plugins
 
-In this project, we are going to add those plugins: `LDAP Authentication`, `Basic Authentication`, `Rate Limiting`, `Prometheus` and `StatsD`. Please refer to https://konghq.com/plugins for more.
+In this project, we are going to add these plugins: `LDAP Authentication`, `Basic Authentication`, `Rate Limiting`, `Prometheus` and `StatsD`. Please refer to https://konghq.com/plugins for more.
 
 ### Add LDAP Authentication plugin
 
@@ -345,7 +345,7 @@ We are going to add the following rate limitings:
    echo "HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$HTTPTRACE_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Make some calls to those endpoints
+1. Make some calls to these endpoints
 
    - Test `/api/public`
      ```
@@ -387,6 +387,8 @@ We are going to add the following rate limitings:
      
    echo "PROMETHEUS_PLUGIN_ID=$PROMETHEUS_PLUGIN_ID"
    ```
+
+1. Make some requests to `simple-service` endpoints
 
 1. You can see some metrics
    ```

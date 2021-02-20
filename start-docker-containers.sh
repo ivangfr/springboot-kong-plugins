@@ -21,7 +21,7 @@ docker run -d \
   -p 389:389 \
   -e "LDAP_ORGANISATION=MyCompany Inc." \
   -e "LDAP_DOMAIN=mycompany.com" \
-  osixia/openldap:1.4.0
+  osixia/openldap:1.5.0
 
 echo "Starting graphite-statsd"
 docker run -d \
@@ -33,7 +33,7 @@ docker run -d \
   -p 2023-2024:2023-2024 \
   -p 8125:8125/udp \
   -p 8126:8126 \
-  graphiteapp/graphite-statsd:1.1.7-8
+  graphiteapp/graphite-statsd:1.1.7-9
 
 echo "Starting kong-database container"
 docker run -d \
@@ -44,7 +44,7 @@ docker run -d \
   -e "POSTGRES_USER=kong" \
   -e "POSTGRES_PASSWORD=kong" \
   -e "POSTGRES_DB=kong" \
-  postgres:13.1
+  postgres:13.2
 
 sleep 5
 
@@ -63,7 +63,7 @@ docker run --rm \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kong" \
-  kong:2.2.0 kong migrations bootstrap
+  kong:2.3.2 kong migrations bootstrap
 
 sleep 3
 
@@ -85,7 +85,7 @@ docker run -d \
   -p 8443:8443 \
   -p 8001:8001 \
   -p 8444:8444 \
-  kong:2.2.0
+  kong:2.3.2
 
 echo "-------------------------------------------"
 echo "Containers started!"
