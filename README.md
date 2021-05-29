@@ -20,14 +20,52 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 - [`Docker`](https://www.docker.com/)
 - [`jq`](https://stedolan.github.io/jq)
 
-## Build application Docker Image
+## Run application during development using Maven
 
 - Open a terminal and navigate to `springboot-kong` root folder
 
-- Run the command below to build `simple-service` Docker Image
+- Run the command below to start
   ```
-  ./mvnw clean compile jib:dockerBuild --projects simple-service
-  ``` 
+  ./mvnw clean spring-boot:run --projects simple-service
+  ```
+
+- Open another terminal and call application endpoints
+  ```
+  curl -i localhost:8080/api/public
+  curl -i localhost:8080/api/private
+  curl -i localhost:8080/actuator/health
+  curl -i localhost:8080/actuator/httptrace
+  ```
+
+## Build application Docker Image
+
+- In a terminal, make sure you are in `springboot-kong` root folder
+
+- Build Docker Image
+  - JVM
+    ```
+    ./docker-build.sh
+    ```
+  - Native
+    ```
+    ./docker-build.sh native
+    ```
+    
+## Test application Docker Image
+
+- In a terminal, run the following command
+  ```
+  docker run --rm -p 8080:8080 --name simple-service ivanfranchin/simple-service:1.0.0
+  ```
+
+- Open another terminal and call application endpoints
+  ```
+  curl -i localhost:8080/api/public
+  curl -i localhost:8080/api/private
+  curl -i localhost:8080/actuator/health
+  curl -i localhost:8080/actuator/httptrace
+  ```
+  > **Warning:** the endpoint `/actuator/httptrace` is not working in Docker native image, see [Issues](#issues)
 
 ## Start environment
 
@@ -416,3 +454,11 @@ We are going to add the following rate limitings:
 ## Shutdown
 
 Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
+
+## Issues
+
+The endpoint `/actuator/httptrace` is returning `404` when running using the Docker native image
+```
+HTTP/1.1 404
+{"timestamp":"...","status":404,"error":"Not Found","path":"/actuator/httptrace"}
+```
