@@ -244,7 +244,7 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
    LDAP_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
      -d "name=ldap-auth" \
      -d "config.hide_credentials=true" \
-     -d "config.ldap_host=ldap-host" \
+     -d "config.ldap_host=openldap" \
      -d "config.ldap_port=389" \
      -d "config.start_tls=false" \
      -d "config.base_dn=ou=users,dc=mycompany,dc=com" \

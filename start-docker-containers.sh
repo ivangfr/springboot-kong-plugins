@@ -13,9 +13,9 @@ docker run -d \
   --restart=unless-stopped \
   ivanfranchin/simple-service:1.0.0
 
-echo "Starting ldap-host"
+echo "Starting openldap"
 docker run -d \
-  --name ldap-host \
+  --name openldap \
   --network=springboot-kong-net \
   --restart=unless-stopped \
   -p 389:389 \
@@ -48,13 +48,13 @@ docker run -d \
 
 sleep 5
 
-echo "Starting phpldapadmin-service"
+echo "Starting phpldapadmin"
 docker run -d \
-  --name phpldapadmin-service \
+  --name phpldapadmin \
   --network=springboot-kong-net \
   --restart=unless-stopped \
   -p 6443:443 \
-  -e "PHPLDAPADMIN_LDAP_HOSTS=ldap-host" \
+  -e "PHPLDAPADMIN_LDAP_HOSTS=openldap" \
   osixia/phpldapadmin:0.9.0
 
 echo "Running kong-database migration"
@@ -101,7 +101,7 @@ while true; do
 done
 
 echo "Removing containers"
-docker rm -fv simple-service graphite-statsd kong-database kong phpldapadmin-service ldap-host
+docker rm -fv simple-service graphite-statsd kong-database kong phpldapadmin openldap
 
 echo "Removing network"
 docker network rm springboot-kong-net
