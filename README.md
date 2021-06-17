@@ -28,6 +28,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   ./mvnw clean spring-boot:run --projects simple-service
   ```
+  > To stop, press `Ctrl+C`
 
 - Open another terminal and call application endpoints
   ```
@@ -57,6 +58,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   docker run --rm -p 8080:8080 --name simple-service ivanfranchin/simple-service:1.0.0
   ```
+  > To stop, press `Ctrl+C`
 
 - Open another terminal and call application endpoints
   ```
@@ -124,7 +126,7 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 ## Kong
 
-In order to configure `Kong`, you need to go to a terminal.
+In order to configure `Kong`, go to a terminal.
 
 ### Check Status
 
@@ -453,7 +455,11 @@ We are going to add the following rate limitings:
 
 ## Shutdown
 
-Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
+- Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
+- To remove the docker images created by this project, run
+  ```
+  ./remove-docker-images.sh
+  ```
 
 ## Issues
 
