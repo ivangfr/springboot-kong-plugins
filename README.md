@@ -28,7 +28,6 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   ./mvnw clean spring-boot:run --projects simple-service
   ```
-  > To stop, press `Ctrl+C`
 
 - Open another terminal and call application endpoints
   ```
@@ -37,6 +36,8 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   curl -i localhost:8080/actuator/health
   curl -i localhost:8080/actuator/httptrace
   ```
+
+- To stop, go to the terminal where the application is running and press `Ctrl+C`
 
 ## Build application Docker Image
 
@@ -58,7 +59,6 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   docker run --rm -p 8080:8080 --name simple-service ivanfranchin/simple-service:1.0.0
   ```
-  > To stop, press `Ctrl+C`
 
 - Open another terminal and call application endpoints
   ```
@@ -68,6 +68,8 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   curl -i localhost:8080/actuator/httptrace
   ```
   > **Warning:** the endpoint `/actuator/httptrace` is not working in Docker native image, see [Issues](#issues)
+
+- To stop, go to the terminal where the application is running and press `Ctrl+C`
 
 ## Start environment
 
@@ -455,16 +457,25 @@ We are going to add the following rate limitings:
 
 ## Shutdown
 
-- Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
-- To remove the docker images created by this project, run
-  ```
-  ./remove-docker-images.sh
-  ```
+Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
+
+## Cleanup
+
+To remove the docker images created by this project, go to a terminal and, inside `springboot-kong`, run the script below
+```
+./remove-docker-images.sh
+```
 
 ## Issues
 
-The endpoint `/actuator/httptrace` is returning `404` when running using the Docker native image
+The endpoint `/actuator/httptrace` is returning `404` when running using the Docker native image. It's returning
 ```
-HTTP/1.1 404
-{"timestamp":"...","status":404,"error":"Not Found","path":"/actuator/httptrace"}
+HTTP/1.1 500
+Content-Type: application/json
+...
+{"timestamp":"...","status":500,"error":"Internal Server Error","path":"/actuator/httptrace"}
+```
+and the application is logging
+```
+WARN 1 --- [nio-8080-exec-9] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.http.converter.HttpMessageNotWritableException: No converter for [class org.springframework.boot.actuate.trace.http.HttpTraceEndpoint$HttpTraceDescriptor] with preset Content-Type 'null']
 ```
