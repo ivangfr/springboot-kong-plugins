@@ -44,7 +44,7 @@ docker run -d \
   -e "POSTGRES_USER=kong" \
   -e "POSTGRES_PASSWORD=kong" \
   -e "POSTGRES_DB=kong" \
-  postgres:13.3
+  postgres:13.4
 
 sleep 5
 

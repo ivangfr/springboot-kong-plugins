@@ -20,5 +20,4 @@ public class SimpleServiceController {
         String username = request.getHeader("X-Credential-Username");
         return username + ", it is private.\n";
     }
-
 }

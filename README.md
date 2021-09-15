@@ -34,7 +34,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   curl -i localhost:8080/api/public
   curl -i localhost:8080/api/private
   curl -i localhost:8080/actuator/health
-  curl -i localhost:8080/actuator/httptrace
+  curl -i localhost:8080/actuator/integrationgraph
   ```
 
 - To stop, go to the terminal where the application is running and press `Ctrl+C`
@@ -65,9 +65,8 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   curl -i localhost:8080/api/public
   curl -i localhost:8080/api/private
   curl -i localhost:8080/actuator/health
-  curl -i localhost:8080/actuator/httptrace
+  curl -i localhost:8080/actuator/integrationgraph
   ```
-  > **Warning:** the endpoint `/actuator/httptrace` is not working in Docker native image, see [Issues](#issues)
 
 - To stop, go to the terminal where the application is running and press `Ctrl+C`
 
@@ -79,7 +78,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   ./start-docker-containers.sh
   ```
-  > **Note:** `simple-service` application is running as a docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
+  > **Note:** `simple-service` application is running as a Docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
 
 ## Import OpenLDAP Users
 
@@ -182,13 +181,13 @@ In order to configure `Kong`, go to a terminal.
    echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
    ```
 
-1. Finally, one route for `/actuator/httptrace` endpoint (it will be secured and only accessible by pre-defined users)
+1. Finally, one route for `/actuator/integrationgraph` endpoint (it will be secured and only accessible by pre-defined users)
    ```
-   HTTPTRACE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
+   INTEGRATIONGRAPH_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
      -H 'Content-Type: application/json' \
-     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/httptrace"], "strip_path": false }' | jq -r '.id')
+     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/integrationgraph"], "strip_path": false }' | jq -r '.id')
    
-   echo "HTTPTRACE_ROUTE_ID=$HTTPTRACE_ROUTE_ID"
+   echo "INTEGRATIONGRAPH_ROUTE_ID=$INTEGRATIONGRAPH_ROUTE_ID"
    ```
 
 1. \[Optional\] To list all `simple-service` routes run
@@ -222,18 +221,18 @@ In order to configure `Kong`, go to a terminal.
 
    > **Note:** This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong` to secure it. It will be done on the next steps.
 
-1. Call `/actuator/httptrace` endpoint
+1. Call `/actuator/integrationgraph` endpoint
    ```
-   curl -i http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
+   curl -i http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
    ```
 
    It should return
    ```
    HTTP/1.1 200
-   {"traces":[{"timestamp":"...
+   {"contentDescriptor":{"providerVersion":...
    ```
 
-   > **Note:** As happened previously with `/api/private`, `/actuator/httptrace` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
+   > **Note:** As happened previously with `/api/private`, `/actuator/integrationgraph` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
 
 ## Plugins
 
@@ -291,20 +290,20 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
 
 ### Add Basic Authentication plugin
 
-The `Basic Authentication` plugin will be used to secure the `/actuator/httptrace` endpoint
+The `Basic Authentication` plugin will be used to secure the `/actuator/integrationgraph` endpoint
 
-1. Add plugin to route `HTTPTRACE_ROUTE_ID`
+1. Add plugin to route `INTEGRATIONGRAPH_ROUTE_ID`
    ```
-   BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$HTTPTRACE_ROUTE_ID/plugins \
+   BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$INTEGRATIONGRAPH_ROUTE_ID/plugins \
      -d "name=basic-auth" \
      -d "config.hide_credentials=true" | jq -r '.id')
      
    echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
    ```
 
-1. Try to call `/actuator/httptrace` endpoint without credentials.
+1. Try to call `/actuator/integrationgraph` endpoint without credentials.
    ```
-   curl -i http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
+   curl -i http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
    ```
 
    It should return
@@ -331,13 +330,13 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/httptrac
 
 1. Call `/api/private` endpoint using `ivan.franchin` credential
    ```
-   curl -i -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
+   curl -i -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
    ```
 
    It should return
    ```
    HTTP/1.1 200
-   {"traces":[{"timestamp":"...
+   {"contentDescriptor":{"providerVersion":...
    ```
 
 1. Let's create another consumer just for testing purpose
@@ -356,9 +355,9 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/httptrac
 ### Add Rate Limiting plugin
 
 We are going to add the following rate limitings:
-- `/api/public`: 1 request a second
+- `/api/public` and `/actuator/health`: 1 request a second
 - `/api/private`: 5 requests a minute
-- `/actuator/httptrace`: 2 requests a minute or 100 requests an hour
+- `/actuator/integrationgraph`: 2 requests a minute or 100 requests an hour
 
 1. Add plugin to route `PUBLIC_ROUTE_ID`
    ```
@@ -377,14 +376,14 @@ We are going to add the following rate limitings:
    echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Add plugin to route `HTTPTRACE_ROUTE_ID`
+1. Add plugin to route `INTEGRATIONGRAPH_ROUTE_ID`
    ```
-   HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$HTTPTRACE_ROUTE_ID/plugins \
+   INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$INTEGRATIONGRAPH_ROUTE_ID/plugins \
      -d "name=rate-limiting"  \
      -d "config.minute=2" \
      -d "config.hour=100" | jq -r '.id')
      
-   echo "HTTPTRACE_RATE_LIMIT_PLUGIN_ID=$HTTPTRACE_RATE_LIMIT_PLUGIN_ID"
+   echo "INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID=$INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID"
    ```
 
 1. Make some calls to these endpoints
@@ -396,11 +395,11 @@ We are going to add the following rate limitings:
      curl -i http://localhost:8000/actuator/health -H 'Host: simple-service'
      ```
 
-   - Test `/actuator/httptrace`
+   - Test `/actuator/integrationgraph`
      ```
-     curl -I -u ivan.franchin:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
+     curl -I -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
      
-     curl -I -u administrator:123 http://localhost:8000/actuator/httptrace -H 'Host: simple-service'
+     curl -I -u administrator:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
      ```
 
    - Test `/api/private`
@@ -461,21 +460,7 @@ Go to the terminal where you run the script `start-docker-containers.sh` and pre
 
 ## Cleanup
 
-To remove the docker images created by this project, go to a terminal and, inside `springboot-kong`, run the script below
+To remove the Docker image created by this project, go to a terminal and run the command below
 ```
-./remove-docker-images.sh
-```
-
-## Issues
-
-The endpoint `/actuator/httptrace` is returning `404` when running using the Docker native image. It's returning
-```
-HTTP/1.1 500
-Content-Type: application/json
-...
-{"timestamp":"...","status":500,"error":"Internal Server Error","path":"/actuator/httptrace"}
-```
-and the application is logging
-```
-WARN 1 --- [nio-8080-exec-9] .w.s.m.s.DefaultHandlerExceptionResolver : Resolved [org.springframework.http.converter.HttpMessageNotWritableException: No converter for [class org.springframework.boot.actuate.trace.http.HttpTraceEndpoint$HttpTraceDescriptor] with preset Content-Type 'null']
+docker rmi ivanfranchin/simple-service:1.0.0
 ```
