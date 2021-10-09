@@ -127,11 +127,11 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 ## Kong
 
-In order to configure `Kong`, go to a terminal.
+In a terminal, follow the steps below to configure `Kong`
 
 ### Check Status
 
-- Before starting adding `Kong` Services, Routes and Plugins, check if it's running by executing the following command
+- Before starting, check if `Kong` admin API is accessible
   ```
   curl -I http://localhost:8001
   ```
@@ -143,23 +143,34 @@ In order to configure `Kong`, go to a terminal.
 
 ### Add Service
 
-- Using `application/x-www-form-urlencoded` content type
-  ```
-  curl -i -X POST http://localhost:8001/services/ \
-    -d "name=simple-service" \
-    -d "protocol=http" \
-    -d "host=simple-service" \
-    -d "port=8080"
-  ```
+1. You can use `application/x-www-form-urlencoded` or `application/json` content type
+  - `application/x-www-form-urlencoded`
+    ```  
+    SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
+      -d "name=simple-service" \
+      -d "protocol=http" \
+      -d "host=simple-service" \
+      -d "port=8080" | jq -r '.id')
+    
+    echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
+    ```
 
-**OR** 
+  **OR** 
 
-- Using `application/json` content type. Besides, in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used.
-  ```
-  curl -i -X POST http://localhost:8001/services/ \
-    -H 'Content-Type: application/json' \
-    -d '{ "name": "simple-service", "url":"http://simple-service:8080" }'
-  ```
+  - `application/json`.
+    > **Note:** in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
+    ```
+    SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
+      -H 'Content-Type: application/json' \
+      -d '{ "name": "simple-service", "url":"http://simple-service:8080" }' | jq -r '.id')
+    
+    echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
+    ```
+
+1. \[Optional\] To list all services run
+   ```
+   curl -s http://localhost:8001/services | jq .
+   ```
 
 ### Add routes
 
@@ -367,6 +378,7 @@ We are going to add the following rate limitings:
      
    echo "PUBLIC_RATE_LIMIT_PLUGIN_ID=$PUBLIC_RATE_LIMIT_PLUGIN_ID"
    ```
+
 1. Add plugin to route `PRIVATE_ROUTE_ID`
    ```
    PRIVATE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
@@ -397,9 +409,9 @@ We are going to add the following rate limitings:
 
    - Test `/actuator/integrationgraph`
      ```
-     curl -I -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+     curl -i -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
      
-     curl -I -u administrator:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+     curl -i -u administrator:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
      ```
 
    - Test `/api/private`
