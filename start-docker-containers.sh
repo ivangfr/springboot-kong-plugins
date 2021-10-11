@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-# In this project we are using `Postgres` database for `Kong`. Another option is `Cassandra`.
-# If you'd like to use Cassandra, please refer to https://getkong.org/install/docker
-
 echo "Creating network"
 docker network create springboot-kong-net
 

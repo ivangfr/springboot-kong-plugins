@@ -10,10 +10,10 @@
     </parent>
 
     <groupId>com.mycompany</groupId>
-    <artifactId>springboot-kong</artifactId>
+    <artifactId>springboot-kong-plugins</artifactId>
     <version>1.0.0</version>
     <packaging>pom</packaging>
-    <name>springboot-kong</name>
+    <name>springboot-kong-plugins</name>
     <description>Demo project for Spring Boot</description>
 
     <properties>

@@ -1,10 +1,10 @@
-# springboot-kong
+# springboot-kong-plugins
 
-The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://getkong.org) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `Prometheus` and `StatsD` plugins.
+The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `Prometheus` and `StatsD` plugins.
 
 ## Project Diagram
 
-![project-diagram](images/project-diagram.png)
+![project-diagram](documentation/project-diagram.png)
 
 ## Application
 
@@ -16,13 +16,13 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Prerequisites
 
-- [`Java 11+`](https://www.oracle.com/java/technologies/javase-jdk11-downloads.html)
+- [`Java 11+`](https://www.oracle.com/java/technologies/downloads/#java11)
 - [`Docker`](https://www.docker.com/)
 - [`jq`](https://stedolan.github.io/jq)
 
 ## Run application during development using Maven
 
-- Open a terminal and navigate to `springboot-kong` root folder
+- Open a terminal and navigate to `springboot-kong-plugins` root folder
 
 - Run the command below to start
   ```
@@ -41,7 +41,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Build application Docker Image
 
-- In a terminal, make sure you are in `springboot-kong` root folder
+- In a terminal, make sure you are in `springboot-kong-plugins` root folder
 
 - Build Docker Image
   - JVM
@@ -72,7 +72,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Start environment
 
-- In a terminal, make use you are in `springboot-kong` root folder
+- In a terminal, make use you are in `springboot-kong-plugins` root folder
 
 - Run the following script
   ```
@@ -82,7 +82,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Import OpenLDAP Users
 
-The `LDIF` file that we will use, `springboot-kong/ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for `mycompany.com`. Basically, it has 2 groups (`developers` and `admin`) and 4 users (`Bill Gates`, `Steve Jobs`, `Mark Cuban` and `Ivan Franchin`). Besides, it's defined that `Bill Gates`, `Steve Jobs` and `Mark Cuban` belong to `developers` group and `Ivan Franchin` belongs to `admin` group.
+The `LDIF` file that we will use, `ldap/ldap-mycompany-com.ldif`, has already a pre-defined structure for `mycompany.com`. Basically, it has 2 groups (`developers` and `admin`) and 4 users (`Bill Gates`, `Steve Jobs`, `Mark Cuban` and `Ivan Franchin`). Besides, it's defined that `Bill Gates`, `Steve Jobs` and `Mark Cuban` belong to `developers` group and `Ivan Franchin` belongs to `admin` group.
 ```
 Bill Gates > username: bgates, password: 123
 Steve Jobs > username: sjobs, password: 123
@@ -94,7 +94,7 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 ### Import users running a script
 
-- In another terminal, make use you are in `springboot-kong` root folder
+- In another terminal, make use you are in `springboot-kong-plugins` root folder
 
 - Run the following script
   ```
@@ -119,11 +119,11 @@ There are two ways to import those users: by running a script or using `phpldapa
   Password: admin
   ```
 
-- Import the file `springboot-kong/ldap/ldap-mycompany-com.ldif`
+- Import the file `ldap/ldap-mycompany-com.ldif`
 
 - You should see something like
 
-  ![openldap](images/openldap.png)
+  ![openldap](documentation/openldap.png)
 
 ## Kong
 
@@ -144,28 +144,27 @@ In a terminal, follow the steps below to configure `Kong`
 ### Add Service
 
 1. You can use `application/x-www-form-urlencoded` or `application/json` content type
-  - `application/x-www-form-urlencoded`
-    ```  
-    SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
-      -d "name=simple-service" \
-      -d "protocol=http" \
-      -d "host=simple-service" \
-      -d "port=8080" | jq -r '.id')
+ 
+   - `application/x-www-form-urlencoded`
+     ```  
+     SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
+       -d "name=simple-service" \
+       -d "protocol=http" \
+       -d "host=simple-service" \
+       -d "port=8080" | jq -r '.id')
     
-    echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
-    ```
+     echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
+     ```
 
-  **OR** 
-
-  - `application/json`.
-    > **Note:** in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
-    ```
-    SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
-      -H 'Content-Type: application/json' \
-      -d '{ "name": "simple-service", "url":"http://simple-service:8080" }' | jq -r '.id')
+   - `application/json`.
+     > **Note:** in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
+     ```
+     SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
+       -H 'Content-Type: application/json' \
+       -d '{ "name": "simple-service", "url":"http://simple-service:8080" }' | jq -r '.id')
     
-    echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
-    ```
+     echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
+     ```
 
 1. \[Optional\] To list all services run
    ```
@@ -464,7 +463,7 @@ We are going to add the following rate limitings:
 
 1. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
 
-   ![graphite-statsd](images/graphite-statsd.png)
+   ![graphite-statsd](documentation/graphite-statsd.png)
 
 ## Shutdown
 
