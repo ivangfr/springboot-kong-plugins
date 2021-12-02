@@ -33,8 +33,8 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   curl -i localhost:8080/api/public
   curl -i localhost:8080/api/private
+  curl -i localhost:8080/actuator/beans
   curl -i localhost:8080/actuator/health
-  curl -i localhost:8080/actuator/integrationgraph
   ```
 
 - To stop, go to the terminal where the application is running and press `Ctrl+C`
@@ -64,13 +64,13 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   curl -i localhost:8080/api/public
   curl -i localhost:8080/api/private
+  curl -i localhost:8080/actuator/beans
   curl -i localhost:8080/actuator/health
-  curl -i localhost:8080/actuator/integrationgraph
   ```
 
 - To stop, go to the terminal where the application is running and press `Ctrl+C`
 
-## Start environment
+## Start Environment
 
 - In a terminal, make use you are in `springboot-kong-plugins` root folder
 
@@ -191,13 +191,13 @@ In a terminal, follow the steps below to configure `Kong`
    echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
    ```
 
-1. Finally, one route for `/actuator/integrationgraph` endpoint (it will be secured and only accessible by pre-defined users)
+1. Finally, one route for `/actuator/beans` endpoint (it will be secured and only accessible by pre-defined users)
    ```
-   INTEGRATIONGRAPH_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
+   BEANS_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
      -H 'Content-Type: application/json' \
-     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/integrationgraph"], "strip_path": false }' | jq -r '.id')
+     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/beans"], "strip_path": false }' | jq -r '.id')
    
-   echo "INTEGRATIONGRAPH_ROUTE_ID=$INTEGRATIONGRAPH_ROUTE_ID"
+   echo "BEANS_ROUTE_ID=$BEANS_ROUTE_ID"
    ```
 
 1. \[Optional\] To list all `simple-service` routes run
@@ -231,18 +231,18 @@ In a terminal, follow the steps below to configure `Kong`
 
    > **Note:** This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong` to secure it. It will be done on the next steps.
 
-1. Call `/actuator/integrationgraph` endpoint
+1. Call `/actuator/beans` endpoint
    ```
-   curl -i http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+   curl -i http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
 
    It should return
    ```
    HTTP/1.1 200
-   {"contentDescriptor":{"providerVersion":...
+   {"contexts":{"simple-service":{"beans":...
    ```
 
-   > **Note:** As happened previously with `/api/private`, `/actuator/integrationgraph` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
+   > **Note:** As happened previously with `/api/private`, `/actuator/beans` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
 
 ## Plugins
 
@@ -300,20 +300,20 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
 
 ### Add Basic Authentication plugin
 
-The `Basic Authentication` plugin will be used to secure the `/actuator/integrationgraph` endpoint
+The `Basic Authentication` plugin will be used to secure the `/actuator/beans` endpoint
 
-1. Add plugin to route `INTEGRATIONGRAPH_ROUTE_ID`
+1. Add plugin to route `BEANS_ROUTE_ID`
    ```
-   BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$INTEGRATIONGRAPH_ROUTE_ID/plugins \
+   BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
      -d "name=basic-auth" \
      -d "config.hide_credentials=true" | jq -r '.id')
      
    echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
    ```
 
-1. Try to call `/actuator/integrationgraph` endpoint without credentials.
+1. Try to call `/actuator/beans` endpoint without credentials.
    ```
-   curl -i http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+   curl -i http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
 
    It should return
@@ -340,7 +340,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/integrat
 
 1. Call `/api/private` endpoint using `ivan.franchin` credential
    ```
-   curl -i -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+   curl -i -u ivan.franchin:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
 
    It should return
@@ -367,7 +367,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/integrat
 We are going to add the following rate limitings:
 - `/api/public` and `/actuator/health`: 1 request a second
 - `/api/private`: 5 requests a minute
-- `/actuator/integrationgraph`: 2 requests a minute or 100 requests an hour
+- `/actuator/beans`: 2 requests a minute or 100 requests an hour
 
 1. Add plugin to route `PUBLIC_ROUTE_ID`
    ```
@@ -387,14 +387,14 @@ We are going to add the following rate limitings:
    echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Add plugin to route `INTEGRATIONGRAPH_ROUTE_ID`
+1. Add plugin to route `BEANS_ROUTE_ID`
    ```
-   INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$INTEGRATIONGRAPH_ROUTE_ID/plugins \
+   BEANS_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
      -d "name=rate-limiting"  \
      -d "config.minute=2" \
      -d "config.hour=100" | jq -r '.id')
      
-   echo "INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID=$INTEGRATIONGRAPH_RATE_LIMIT_PLUGIN_ID"
+   echo "BEANS_RATE_LIMIT_PLUGIN_ID=$BEANS_RATE_LIMIT_PLUGIN_ID"
    ```
 
 1. Make some calls to these endpoints
@@ -406,11 +406,11 @@ We are going to add the following rate limitings:
      curl -i http://localhost:8000/actuator/health -H 'Host: simple-service'
      ```
 
-   - Test `/actuator/integrationgraph`
+   - Test `/actuator/beans`
      ```
-     curl -i -u ivan.franchin:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+     curl -i -u ivan.franchin:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
      
-     curl -i -u administrator:123 http://localhost:8000/actuator/integrationgraph -H 'Host: simple-service'
+     curl -i -u administrator:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
      ```
 
    - Test `/api/private`

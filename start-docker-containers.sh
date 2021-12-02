@@ -30,7 +30,7 @@ docker run -d \
   -p 8126:8126 \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  graphiteapp/graphite-statsd:1.1.8-1
+  graphiteapp/graphite-statsd:1.1.8-2
 
 echo "Starting kong-database"
 docker run -d \
@@ -41,7 +41,7 @@ docker run -d \
   -e "POSTGRES_DB=kong" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  postgres:13.4
+  postgres:13.5
 
 sleep 5
 
