@@ -471,7 +471,7 @@ Go to the terminal where you run the script `start-docker-containers.sh` and pre
 
 ## Cleanup
 
-To remove the Docker image created by this project, go to a terminal and run the command below
+To remove the Docker image created by this project, go to a terminal and, `springboot-kong-plugins` root folder, run the script below
 ```
-docker rmi ivanfranchin/simple-service:1.0.0
+./remove-docker-images.sh
 ```
