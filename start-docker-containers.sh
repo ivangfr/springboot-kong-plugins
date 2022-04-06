@@ -30,7 +30,7 @@ docker run -d \
   -p 8126:8126 \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  graphiteapp/graphite-statsd:1.1.8-5
+  graphiteapp/graphite-statsd:1.1.8-8
 
 echo "Starting kong-database"
 docker run -d \
@@ -41,7 +41,7 @@ docker run -d \
   -e "POSTGRES_DB=kong" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  postgres:13.5
+  postgres:13.6
 
 sleep 5
 
@@ -60,7 +60,7 @@ docker run --rm \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kong" \
   --network=springboot-kong-net \
-  kong:2.7.0 kong migrations bootstrap
+  kong:2.8.0 kong migrations bootstrap
 
 sleep 3
 
@@ -82,7 +82,7 @@ docker run -d \
   -e "KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  kong:2.7.0
+  kong:2.8.0
 
 echo "-------------------------------------------"
 echo "Containers started!"
