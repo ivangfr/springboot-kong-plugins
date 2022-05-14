@@ -60,7 +60,7 @@ docker run --rm \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kong" \
   --network=springboot-kong-net \
-  kong:2.8.0 kong migrations bootstrap
+  kong:2.8.1 kong migrations bootstrap
 
 sleep 3
 
@@ -82,7 +82,7 @@ docker run -d \
   -e "KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  kong:2.8.0
+  kong:2.8.1
 
 echo "-------------------------------------------"
 echo "Containers started!"
