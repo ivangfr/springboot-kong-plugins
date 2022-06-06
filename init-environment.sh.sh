@@ -1,16 +1,39 @@
 #!/usr/bin/env bash
 
+SIMPLE_SERVICE_VERSION="1.0.0"
+OPENLDAP_VERSION="1.5.0"
+PHPLDAPADMIN_VERSION="0.9.0"
+POSTGRES_VERSION="13.6"
+KONG_VERSION="2.8.1"
+
+if [[ "$(docker images -q ivanfranchin/simple-service:${SIMPLE_SERVICE_VERSION} 2> /dev/null)" == "" ]] ; then
+  echo "[WARNING] Before initialize the environment, build the simple-service Docker image: ./docker-build.sh [native]"
+  exit 1
+fi
+
+source scripts/my-functions.sh
+
+echo
+echo "Starting environment"
+echo "===================="
+
+echo
 echo "Creating network"
+echo "----------------"
 docker network create springboot-kong-net
 
+echo
 echo "Starting simple-service"
+echo "-----------------------"
 docker run -d \
   --name simple-service \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  ivanfranchin/simple-service:1.0.0
+  ivanfranchin/simple-service:${SIMPLE_SERVICE_VERSION}
 
+echo
 echo "Starting openldap"
+echo "-----------------"
 docker run -d \
   --name openldap \
   -p 389:389 \
@@ -18,21 +41,22 @@ docker run -d \
   -e "LDAP_DOMAIN=mycompany.com" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  osixia/openldap:1.5.0
+  osixia/openldap:${OPENLDAP_VERSION}
 
-echo "Starting graphite-statsd"
+echo
+echo "Starting phpldapadmin"
+echo "---------------------"
 docker run -d \
-  --name graphite-statsd \
-  -p 8081:80 \
-  -p 2003-2004:2003-2004 \
-  -p 2023-2024:2023-2024 \
-  -p 8125:8125/udp \
-  -p 8126:8126 \
+  --name phpldapadmin \
+  -p 6443:443 \
+  -e "PHPLDAPADMIN_LDAP_HOSTS=openldap" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  graphiteapp/graphite-statsd:1.1.8-8
+  osixia/phpldapadmin:${PHPLDAPADMIN_VERSION}
 
+echo
 echo "Starting kong-database"
+echo "----------------------"
 docker run -d \
   --name kong-database \
   -p 5432:5432 \
@@ -41,30 +65,24 @@ docker run -d \
   -e "POSTGRES_DB=kong" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  postgres:13.6
+  postgres:${POSTGRES_VERSION}
 
-sleep 5
+echo
+wait_for_container_log "kong-database" "port 5432"
 
-echo "Starting phpldapadmin"
-docker run -d \
-  --name phpldapadmin \
-  -p 6443:443 \
-  -e "PHPLDAPADMIN_LDAP_HOSTS=openldap" \
-  --restart=unless-stopped \
-  --network=springboot-kong-net \
-  osixia/phpldapadmin:0.9.0
-
+echo
 echo "Running kong-database migration"
+echo "-------------------------------"
 docker run --rm \
   -e "KONG_DATABASE=postgres" \
   -e "KONG_PG_HOST=kong-database" \
   -e "KONG_PG_PASSWORD=kong" \
   --network=springboot-kong-net \
-  kong:2.8.1 kong migrations bootstrap
+  kong:${KONG_VERSION} kong migrations bootstrap
 
-sleep 3
-
+echo
 echo "Starting kong"
+echo "-------------"
 docker run -d \
   --name kong \
   -p 8000:8000 \
@@ -82,23 +100,15 @@ docker run -d \
   -e "KONG_ADMIN_LISTEN_SSL=0.0.0.0:8444" \
   --restart=unless-stopped \
   --network=springboot-kong-net \
-  kong:2.8.1
+  kong:${KONG_VERSION}
 
-echo "-------------------------------------------"
-echo "Containers started!"
-echo "Press 'q' to stop and remove all containers"
-echo "-------------------------------------------"
-while true; do
-    # In the following line -t for timeout, -N for just 1 character
-    read -t 0.25 -N 1 input
-    if [[ ${input} = "q" ]] || [[ ${input} = "Q" ]]; then
-        echo
-        break
-    fi
-done
+echo
+wait_for_container_log "kong" "finished preloading"
 
-echo "Removing containers"
-docker rm -fv simple-service graphite-statsd kong-database kong phpldapadmin openldap
+echo
+wait_for_container_log "simple-service" "Started"
 
-echo "Removing network"
-docker network rm springboot-kong-net
+echo
+echo "Environment Up and Running"
+echo "=========================="
+echo

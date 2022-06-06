@@ -1,6 +1,6 @@
 # springboot-kong-plugins
 
-The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting`, `Prometheus` and `StatsD` plugins.
+The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting` and `Prometheus` plugins.
 
 ## Project Diagram
 
@@ -70,13 +70,13 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 - To stop, go to the terminal where the application is running and press `Ctrl+C`
 
-## Start Environment
+## Initialize Environment
 
 - In a terminal, make use you are in `springboot-kong-plugins` root folder
 
 - Run the following script
   ```
-  ./start-docker-containers.sh
+  ./init-environment.sh
   ```
   > **Note:** `simple-service` application is running as a Docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
 
@@ -146,7 +146,7 @@ In a terminal, follow the steps below to configure `Kong`
 1. You can use `application/x-www-form-urlencoded` or `application/json` content type
  
    - `application/x-www-form-urlencoded`
-     ```  
+     ```
      SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
        -d "name=simple-service" \
        -d "protocol=http" \
@@ -246,7 +246,7 @@ In a terminal, follow the steps below to configure `Kong`
 
 ## Plugins
 
-In this project, we are going to add these plugins: `LDAP Authentication`, `Basic Authentication`, `Rate Limiting`, `Prometheus` and `StatsD`. Please refer to https://konghq.com/plugins for more.
+In this project, we are going to add these plugins: `LDAP Authentication`, `Basic Authentication`, `Rate Limiting` and `Prometheus`. Please refer to https://konghq.com/plugins for more.
 
 ### Add LDAP Authentication plugin
 
@@ -372,7 +372,7 @@ We are going to add the following rate limitings:
 1. Add plugin to route `PUBLIC_ROUTE_ID`
    ```
    PUBLIC_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PUBLIC_ROUTE_ID/plugins \
-     -d "name=rate-limiting"  \
+     -d "name=rate-limiting" \
      -d "config.second=1" | jq -r '.id')
      
    echo "PUBLIC_RATE_LIMIT_PLUGIN_ID=$PUBLIC_RATE_LIMIT_PLUGIN_ID"
@@ -381,7 +381,7 @@ We are going to add the following rate limitings:
 1. Add plugin to route `PRIVATE_ROUTE_ID`
    ```
    PRIVATE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
-     -d "name=rate-limiting"  \
+     -d "name=rate-limiting" \
      -d "config.minute=5" | jq -r '.id')
      
    echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
@@ -390,7 +390,7 @@ We are going to add the following rate limitings:
 1. Add plugin to route `BEANS_ROUTE_ID`
    ```
    BEANS_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
-     -d "name=rate-limiting"  \
+     -d "name=rate-limiting" \
      -d "config.minute=2" \
      -d "config.hour=100" | jq -r '.id')
      
@@ -402,14 +402,12 @@ We are going to add the following rate limitings:
    - Test `/api/public`
      ```
      curl -i http://localhost:8000/api/public -H 'Host: simple-service'
-     
      curl -i http://localhost:8000/actuator/health -H 'Host: simple-service'
      ```
 
    - Test `/actuator/beans`
      ```
      curl -i -u ivan.franchin:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
-     
      curl -i -u administrator:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
      ```
 
@@ -447,31 +445,16 @@ We are going to add the following rate limitings:
    curl -i http://localhost:8001/metrics
    ```
 
-### Add StatsD plugin
-
-1. Add plugin to `simple-service`
-   ```
-   GRAPHITE_STATSD_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/plugins \
-     -d "name=statsd"  \
-     -d "config.host=graphite-statsd" \
-     -d "config.port=8125" | jq -r '.id')
-     
-   echo "GRAPHITE_STATSD_PLUGIN_ID=$GRAPHITE_STATSD_PLUGIN_ID"
-   ```
-
-1. Make some requests to `simple-service` endpoints
-
-1. Access `Graphite-Statsd` at http://localhost:8081 and check the `kong` statistics.
-
-   ![graphite-statsd](documentation/graphite-statsd.png)
-
 ## Shutdown
 
-Go to the terminal where you run the script `start-docker-containers.sh` and press `q` to stop and remove all containers
+In a terminal and, inside `springboot-kong-plugins` root folder, run the following script
+```
+./shutdown-environment.sh
+```
 
 ## Cleanup
 
-To remove the Docker image created by this project, go to a terminal and, `springboot-kong-plugins` root folder, run the script below
+To remove the Docker image created by this project, go to a terminal and, inside `springboot-kong-plugins` root folder, run the script below
 ```
 ./remove-docker-images.sh
 ```

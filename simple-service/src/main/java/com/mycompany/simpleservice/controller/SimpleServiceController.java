@@ -12,12 +12,11 @@ public class SimpleServiceController {
 
     @GetMapping("/public")
     public String getPublicString() {
-        return "It is public.\n";
+        return "It is public.";
     }
 
     @GetMapping("/private")
     public String getPrivateString(HttpServletRequest request) {
-        String username = request.getHeader("X-Credential-Username");
-        return username + ", it is private.\n";
+        return request.getHeader("X-Credential-Username") + ", it is private.";
     }
 }
