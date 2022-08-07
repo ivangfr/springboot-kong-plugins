@@ -16,7 +16,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Prerequisites
 
-- [`Java 11+`](https://www.oracle.com/java/technologies/downloads/#java11)
+- [`Java 17+`](https://www.oracle.com/java/technologies/downloads/#java17)
 - [`Docker`](https://www.docker.com/)
 - [`jq`](https://stedolan.github.io/jq)
 
@@ -78,7 +78,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
   ```
   ./init-environment.sh
   ```
-  > **Note:** `simple-service` application is running as a Docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
+  > **Note**: `simple-service` application is running as a Docker container. The container does not expose any port to HOST machine. So, it cannot be accessed directly, forcing the caller to use `Kong` as gateway server in order to access it.
 
 ## Import OpenLDAP Users
 
@@ -157,7 +157,7 @@ In a terminal, follow the steps below to configure `Kong`
      ```
 
    - `application/json`.
-     > **Note:** in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
+     > **Note**: in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
      ```
      SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
        -H 'Content-Type: application/json' \
@@ -229,7 +229,7 @@ In a terminal, follow the steps below to configure `Kong`
    null, it is private.
    ```
 
-   > **Note:** This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong` to secure it. It will be done on the next steps.
+   > **Note**: This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong` to secure it. It will be done on the next steps.
 
 1. Call `/actuator/beans` endpoint
    ```
@@ -242,7 +242,7 @@ In a terminal, follow the steps below to configure `Kong`
    {"contexts":{"simple-service":{"beans":...
    ```
 
-   > **Note:** As happened previously with `/api/private`, `/actuator/beans` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
+   > **Note**: As happened previously with `/api/private`, `/actuator/beans` endpoint is not secured by the application. We will use `Kong` to secure it on the next steps.
 
 ## Plugins
 
@@ -269,7 +269,7 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
    echo "LDAP_AUTH_PLUGIN_ID=$LDAP_AUTH_PLUGIN_ID"
    ```
 
-   > **Note:** If you need to update some `LDAP Authentication` plugin configuration, run the following `PATCH` call informing the field you want to update, for example
+   > **Note**: If you need to update some `LDAP Authentication` plugin configuration, run the following `PATCH` call informing the field you want to update, for example
    > ```
    > curl -X PATCH http://localhost:8001/plugins/${LDAP_AUTH_PLUGIN_ID} -d "config.base_dn=ou=users,dc=mycompany,dc=com"
    > ```
