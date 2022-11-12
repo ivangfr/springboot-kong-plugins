@@ -123,7 +123,7 @@ There are two ways to import those users: by running a script or using `phpldapa
 
 - You should see something like
 
-  ![openldap](documentation/openldap.png)
+  ![openldap](documentation/openldap.jpeg)
 
 ## Kong
 
