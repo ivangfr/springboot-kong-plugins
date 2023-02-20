@@ -3,8 +3,8 @@
 SIMPLE_SERVICE_VERSION="1.0.0"
 OPENLDAP_VERSION="1.5.0"
 PHPLDAPADMIN_VERSION="0.9.0"
-POSTGRES_VERSION="13.8"
-KONG_VERSION="2.8.1"
+POSTGRES_VERSION="13.10"
+KONG_VERSION="2.8.3"
 
 if [[ "$(docker images -q ivanfranchin/simple-service:${SIMPLE_SERVICE_VERSION} 2> /dev/null)" == "" ]] ; then
   echo "[WARNING] Before initialize the environment, build the simple-service Docker image: ./docker-build.sh [native]"

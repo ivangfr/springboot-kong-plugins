@@ -1,4 +1,4 @@
-# springboot-kong-plugins
+d# springboot-kong-plugins
 
 The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting` and `Prometheus` plugins.
 
@@ -365,7 +365,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
 ### Add Rate Limiting plugin
 
 We are going to add the following rate limitings:
-- `/api/public` and `/actuator/health`: 1 request a second
+- `/api/public` and `/actuator/health`: one request per second
 - `/api/private`: 5 requests a minute
 - `/actuator/beans`: 2 requests a minute or 100 requests an hour
 
@@ -461,9 +461,10 @@ To remove the Docker image created by this project, go to a terminal and, inside
 
 ## Issues
 
-When upgrading postgres to version `14.x`, there is an error while running `kong-database migration`
+When upgrading postgres to a version above `13.x` (using current kong version), there is an error while running `kong-database migration`
 ```
 Running kong-database migration
+-------------------------------
 Error: module 'openssl.rand' not found:No LuaRocks module found for openssl.rand
 	no field package.preload['openssl.rand']
 	no file './openssl/rand.lua'
