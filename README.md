@@ -4,7 +4,7 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 ## Project Diagram
 
-![project-diagram](documentation/project-diagram.png)
+![project-diagram](documentation/project-diagram.jpeg)
 
 ## Application
 
@@ -166,7 +166,7 @@ In a terminal, follow the steps below to configure `Kong`
      echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
      ```
 
-1. \[Optional\] To list all services run
+2. \[Optional\] To list all services run
    ```
    curl -s http://localhost:8001/services | jq .
    ```
@@ -182,7 +182,7 @@ In a terminal, follow the steps below to configure `Kong`
    echo "PUBLIC_ROUTE_ID=$PUBLIC_ROUTE_ID"
    ```
 
-1. Another route specifically for `/api/private` endpoint (it will be secured and only accessible by LDAP users)
+2. Another route specifically for `/api/private` endpoint (it will be secured and only accessible by LDAP users)
    ```
    PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
      -H 'Content-Type: application/json' \
@@ -191,7 +191,7 @@ In a terminal, follow the steps below to configure `Kong`
    echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
    ```
 
-1. Finally, one route for `/actuator/beans` endpoint (it will be secured and only accessible by pre-defined users)
+3. Finally, one route for `/actuator/beans` endpoint (it will be secured and only accessible by pre-defined users)
    ```
    BEANS_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
      -H 'Content-Type: application/json' \
@@ -200,7 +200,7 @@ In a terminal, follow the steps below to configure `Kong`
    echo "BEANS_ROUTE_ID=$BEANS_ROUTE_ID"
    ```
 
-1. \[Optional\] To list all `simple-service` routes run
+4. \[Optional\] To list all `simple-service` routes run
    ```
    curl -s http://localhost:8001/services/simple-service/routes | jq .
    ```
@@ -218,7 +218,7 @@ In a terminal, follow the steps below to configure `Kong`
    It is public.
    ```
 
-1. Call `/api/private` endpoint
+2. Call `/api/private` endpoint
    ```
    curl -i http://localhost:8000/api/private -H 'Host: simple-service'
    ```
@@ -231,7 +231,7 @@ In a terminal, follow the steps below to configure `Kong`
 
    > **Note**: This endpoint is not secured by the application, that is why the response is returned. The idea is to use `Kong` to secure it. It will be done on the next steps.
 
-1. Call `/actuator/beans` endpoint
+3. Call `/actuator/beans` endpoint
    ```
    curl -i http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
@@ -274,7 +274,7 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
    > curl -X PATCH http://localhost:8001/plugins/${LDAP_AUTH_PLUGIN_ID} -d "config.base_dn=ou=users,dc=mycompany,dc=com"
    > ```
 
-1. Try to call `/api/private` endpoint without credentials
+2. Try to call `/api/private` endpoint without credentials
    ```
    curl -i http://localhost:8000/api/private -H 'Host: simple-service'
    ```
@@ -285,7 +285,7 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
    {"message":"Unauthorized"}
    ```
 
-1. Call `/api/private` endpoint using Bill Gates base64 encode credentials
+3. Call `/api/private` endpoint using Bill Gates base64 encode credentials
    ```
    curl -i http://localhost:8000/api/private \
      -H "Authorization:ldap $(echo -n 'Bill Gates':123 | base64)" \
@@ -311,7 +311,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
    echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
    ```
 
-1. Try to call `/actuator/beans` endpoint without credentials.
+2. Try to call `/actuator/beans` endpoint without credentials.
    ```
    curl -i http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
@@ -322,14 +322,14 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
    {"message":"Unauthorized"}
    ```
 
-1. Create a consumer
+3. Create a consumer
    ```
    IFRANCHIN_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=ivanfranchin" | jq -r '.id')
    
    echo "IFRANCHIN_CONSUMER_ID=$IFRANCHIN_CONSUMER_ID"
    ```
 
-1. Create a credential for consumer
+4. Create a credential for consumer
    ```
    IFRANCHIN_CREDENTIAL_ID2=$(curl -s -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
      -d "username=ivan.franchin" \
@@ -338,7 +338,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
    echo "IFRANCHIN_CREDENTIAL_ID2=$IFRANCHIN_CREDENTIAL_ID2"
    ```
 
-1. Call `/api/private` endpoint using `ivan.franchin` credential
+5. Call `/api/private` endpoint using `ivan.franchin` credential
    ```
    curl -i -u ivan.franchin:123 http://localhost:8000/actuator/beans -H 'Host: simple-service'
    ```
@@ -349,7 +349,7 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
    {"contentDescriptor":{"providerVersion":...
    ```
 
-1. Let's create another consumer just for testing purpose
+6. Let's create another consumer just for testing purpose
    ```
    ADMINISTRATOR_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=administrator" | jq -r '.id')
    
@@ -378,7 +378,7 @@ We are going to add the following rate limitings:
    echo "PUBLIC_RATE_LIMIT_PLUGIN_ID=$PUBLIC_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Add plugin to route `PRIVATE_ROUTE_ID`
+2. Add plugin to route `PRIVATE_ROUTE_ID`
    ```
    PRIVATE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
      -d "name=rate-limiting" \
@@ -387,7 +387,7 @@ We are going to add the following rate limitings:
    echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Add plugin to route `BEANS_ROUTE_ID`
+3. Add plugin to route `BEANS_ROUTE_ID`
    ```
    BEANS_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
      -d "name=rate-limiting" \
@@ -397,7 +397,7 @@ We are going to add the following rate limitings:
    echo "BEANS_RATE_LIMIT_PLUGIN_ID=$BEANS_RATE_LIMIT_PLUGIN_ID"
    ```
 
-1. Make some calls to these endpoints
+4. Make some calls to these endpoints
 
    - Test `/api/public`
      ```
@@ -422,7 +422,7 @@ We are going to add the following rate limitings:
        -H 'Host: simple-service'
      ```
 
-1. After exceeding some calls in a minute, you should see
+5. After exceeding some calls in a minute, you should see
    ```
    HTTP/1.1 429 Too Many Requests
    {"message":"API rate limit exceeded"}
@@ -438,9 +438,9 @@ We are going to add the following rate limitings:
    echo "PROMETHEUS_PLUGIN_ID=$PROMETHEUS_PLUGIN_ID"
    ```
 
-1. Make some requests to `simple-service` endpoints
+2. Make some requests to `simple-service` endpoints
 
-1. You can see some metrics
+3. You can see some metrics
    ```
    curl -i http://localhost:8001/metrics
    ```
