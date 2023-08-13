@@ -18,7 +18,6 @@ The goal of this project is to create a simple [`Spring Boot`](https://docs.spri
 
 - [`Java 17+`](https://www.oracle.com/java/technologies/downloads/#java17)
 - [`Docker`](https://www.docker.com/)
-- [`jq`](https://stedolan.github.io/jq)
 
 ## Run application during development using Maven
 
@@ -143,66 +142,53 @@ In a terminal, follow the steps below to configure `Kong`
 
 ### Add Service
 
-1. You can use `application/x-www-form-urlencoded` or `application/json` content type
- 
-   - `application/x-www-form-urlencoded`
-     ```
-     SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
-       -d "name=simple-service" \
-       -d "protocol=http" \
-       -d "host=simple-service" \
-       -d "port=8080" | jq -r '.id')
-    
-     echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
-     ```
-
-   - `application/json`.
-     > **Note**: in order to set `protocol`, `host`, `port` and `path` at once, the `url` shorthand attribute can be used
-     ```
-     SIMPLE_SERVICE_ID=$(curl -s -X POST http://localhost:8001/services/ \
-       -H 'Content-Type: application/json' \
-       -d '{ "name": "simple-service", "url":"http://simple-service:8080" }' | jq -r '.id')
-    
-     echo "SIMPLE_SERVICE_ID=$SIMPLE_SERVICE_ID"
-     ```
+1. The following call will add the `simple-service` service
+   ```
+   curl -i -X POST http://localhost:8001/services/ \
+     -d "name=simple-service" \
+     -d "protocol=http" \
+     -d "host=simple-service" \
+     -d "port=8080"
+   ```
 
 2. \[Optional\] To list all services run
    ```
-   curl -s http://localhost:8001/services | jq .
+   curl -i http://localhost:8001/services
    ```
 
 ### Add routes
 
 1. One default route for the service, no specific `path` included
    ```
-   PUBLIC_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
+   curl -i -X POST http://localhost:8001/services/simple-service/routes/ \
+     -d "name=simple-service-default" \
      -d "protocols[]=http" \
-     -d "hosts[]=simple-service" | jq -r '.id')
-     
-   echo "PUBLIC_ROUTE_ID=$PUBLIC_ROUTE_ID"
+     -d "hosts[]=simple-service"
    ```
 
 2. Another route specifically for `/api/private` endpoint (it will be secured and only accessible by LDAP users)
    ```
-   PRIVATE_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
-     -H 'Content-Type: application/json' \
-     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/api/private"], "strip_path": false }' | jq -r '.id')
-   
-   echo "PRIVATE_ROUTE_ID=$PRIVATE_ROUTE_ID"
+   curl -i -X POST http://localhost:8001/services/simple-service/routes/ \
+     -d "name=simple-service-api-private" \
+     -d "protocols[]=http" \
+     -d "hosts[]=simple-service" \
+     -d "paths[]=/api/private" \
+     -d "strip_path=false"
    ```
 
 3. Finally, one route for `/actuator/beans` endpoint (it will be secured and only accessible by pre-defined users)
    ```
-   BEANS_ROUTE_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/routes/ \
-     -H 'Content-Type: application/json' \
-     -d '{ "protocols": ["http"], "hosts": ["simple-service"], "paths": ["/actuator/beans"], "strip_path": false }' | jq -r '.id')
-   
-   echo "BEANS_ROUTE_ID=$BEANS_ROUTE_ID"
+   curl -i -X POST http://localhost:8001/services/simple-service/routes/ \
+     -d "name=simple-service-actuator-beans" \
+     -d "protocols[]=http" \
+     -d "hosts[]=simple-service" \
+     -d "paths[]=/actuator/beans" \
+     -d "strip_path=false"
    ```
 
 4. \[Optional\] To list all `simple-service` routes run
    ```
-   curl -s http://localhost:8001/services/simple-service/routes | jq .
+   curl -i http://localhost:8001/services/simple-service/routes
    ```
 
 ### Call endpoints
@@ -252,9 +238,9 @@ In this project, we are going to add these plugins: `LDAP Authentication`, `Basi
 
 The `LDAP Authentication` plugin will be used to secure the `/api/private` endpoint.
 
-1. Add plugin to route `PRIVATE_ROUTE_ID`
+1. Add plugin to route `simple-service-api-private`
    ```
-   LDAP_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
+   curl -i -X POST http://localhost:8001/routes/simple-service-api-private/plugins \
      -d "name=ldap-auth" \
      -d "config.hide_credentials=true" \
      -d "config.ldap_host=openldap" \
@@ -264,15 +250,8 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
      -d "config.verify_ldap_host=false" \
      -d "config.attribute=cn" \
      -d "config.cache_ttl=60" \
-     -d "config.header_type=ldap" | jq -r '.id')
-     
-   echo "LDAP_AUTH_PLUGIN_ID=$LDAP_AUTH_PLUGIN_ID"
+     -d "config.header_type=ldap"
    ```
-
-   > **Note**: If you need to update some `LDAP Authentication` plugin configuration, run the following `PATCH` call informing the field you want to update, for example
-   > ```
-   > curl -X PATCH http://localhost:8001/plugins/${LDAP_AUTH_PLUGIN_ID} -d "config.base_dn=ou=users,dc=mycompany,dc=com"
-   > ```
 
 2. Try to call `/api/private` endpoint without credentials
    ```
@@ -302,13 +281,11 @@ The `LDAP Authentication` plugin will be used to secure the `/api/private` endpo
 
 The `Basic Authentication` plugin will be used to secure the `/actuator/beans` endpoint
 
-1. Add plugin to route `BEANS_ROUTE_ID`
+1. Add plugin to route `simple-service-actuator-beans`
    ```
-   BASIC_AUTH_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
+   curl -i -X POST http://localhost:8001/routes/simple-service-actuator-beans/plugins \
      -d "name=basic-auth" \
-     -d "config.hide_credentials=true" | jq -r '.id')
-     
-   echo "BASIC_AUTH_PLUGIN_ID=$BASIC_AUTH_PLUGIN_ID"
+     -d "config.hide_credentials=true"
    ```
 
 2. Try to call `/actuator/beans` endpoint without credentials.
@@ -324,18 +301,14 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
 
 3. Create a consumer
    ```
-   IFRANCHIN_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=ivanfranchin" | jq -r '.id')
-   
-   echo "IFRANCHIN_CONSUMER_ID=$IFRANCHIN_CONSUMER_ID"
+   curl -i -X POST http://localhost:8001/consumers -d "username=ivanfranchin"
    ```
 
 4. Create a credential for consumer
    ```
-   IFRANCHIN_CREDENTIAL_ID2=$(curl -s -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
+   curl -i -X POST http://localhost:8001/consumers/ivanfranchin/basic-auth \
      -d "username=ivan.franchin" \
-     -d "password=123" | jq -r '.id')
-     
-   echo "IFRANCHIN_CREDENTIAL_ID2=$IFRANCHIN_CREDENTIAL_ID2"
+     -d "password=123"
    ```
 
 5. Call `/api/private` endpoint using `ivan.franchin` credential
@@ -351,15 +324,11 @@ The `Basic Authentication` plugin will be used to secure the `/actuator/beans` e
 
 6. Let's create another consumer just for testing purpose
    ```
-   ADMINISTRATOR_CONSUMER_ID=$(curl -s -X POST http://localhost:8001/consumers -d "username=administrator" | jq -r '.id')
+   curl -i -X POST http://localhost:8001/consumers -d "username=administrator"
    
-   echo "ADMINISTRATOR_CONSUMER_ID=$ADMINISTRATOR_CONSUMER_ID"
-   
-   ADMINISTRATOR_CREDENTIAL_ID=$(curl -s -X POST http://localhost:8001/consumers/administrator/basic-auth \
+   curl -i -X POST http://localhost:8001/consumers/administrator/basic-auth \
      -d "username=administrator" \
-     -d "password=123" | jq -r '.id')
-     
-   echo "ADMINISTRATOR_CREDENTIAL_ID=$ADMINISTRATOR_CREDENTIAL_ID"
+     -d "password=123"
    ```
 
 ### Add Rate Limiting plugin
@@ -369,32 +338,26 @@ We are going to add the following rate limitings:
 - `/api/private`: 5 requests a minute
 - `/actuator/beans`: 2 requests a minute or 100 requests an hour
 
-1. Add plugin to route `PUBLIC_ROUTE_ID`
+1. Add plugin to route `simple-service-default`
    ```
-   PUBLIC_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PUBLIC_ROUTE_ID/plugins \
+   curl -i -X POST http://localhost:8001/routes/simple-service-default/plugins \
      -d "name=rate-limiting" \
-     -d "config.second=1" | jq -r '.id')
-     
-   echo "PUBLIC_RATE_LIMIT_PLUGIN_ID=$PUBLIC_RATE_LIMIT_PLUGIN_ID"
+     -d "config.second=1"
    ```
 
-2. Add plugin to route `PRIVATE_ROUTE_ID`
+2. Add plugin to route `simple-service-api-private`
    ```
-   PRIVATE_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$PRIVATE_ROUTE_ID/plugins \
+   curl -i -X POST http://localhost:8001/routes/simple-service-api-private/plugins \
      -d "name=rate-limiting" \
-     -d "config.minute=5" | jq -r '.id')
-     
-   echo "PRIVATE_RATE_LIMIT_PLUGIN_ID=$PRIVATE_RATE_LIMIT_PLUGIN_ID"
+     -d "config.minute=5"
    ```
 
-3. Add plugin to route `BEANS_ROUTE_ID`
+3. Add plugin to route `simple-service-actuator-beans`
    ```
-   BEANS_RATE_LIMIT_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/routes/$BEANS_ROUTE_ID/plugins \
+   curl -i -X POST http://localhost:8001/routes/simple-service-actuator-beans/plugins \
      -d "name=rate-limiting" \
      -d "config.minute=2" \
-     -d "config.hour=100" | jq -r '.id')
-     
-   echo "BEANS_RATE_LIMIT_PLUGIN_ID=$BEANS_RATE_LIMIT_PLUGIN_ID"
+     -d "config.hour=100"
    ```
 
 4. Make some calls to these endpoints
@@ -432,10 +395,7 @@ We are going to add the following rate limitings:
 
 1. Add plugin to `simple-service`
    ```
-   PROMETHEUS_PLUGIN_ID=$(curl -s -X POST http://localhost:8001/services/simple-service/plugins \
-     -d "name=prometheus" | jq -r '.id')
-     
-   echo "PROMETHEUS_PLUGIN_ID=$PROMETHEUS_PLUGIN_ID"
+   curl -i -X POST http://localhost:8001/services/simple-service/plugins -d "name=prometheus"
    ```
 
 2. Make some requests to `simple-service` endpoints
