@@ -1,6 +1,6 @@
 # springboot-kong-plugins
 
-The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/docs/current/reference/htmlsingle/) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting` and `Prometheus` plugins.
+The goal of this project is to create a simple [`Spring Boot`](https://docs.spring.io/spring-boot/index.html) REST API and securing it with [`Kong`](https://konghq.com/kong/) using the `LDAP Authentication` and `Basic Authentication` plugins. Besides, we will explore more plugins that `Kong` offers like: `Rate Limiting` and `Prometheus` plugins.
 
 ## Proof-of-Concepts & Articles
 
@@ -8,9 +8,9 @@ On [ivangfr.github.io](https://ivangfr.github.io), I have compiled my Proof-of-C
 
 ## Additional Readings
 
-- \[**Medium**\] [**Using Kong to secure a Simple Spring Boot REST API with Basic Authentication plugin**](https://medium.com/javarevisited/using-kong-to-secure-a-simple-spring-boot-rest-api-with-basic-authentication-plugin-90f3529043f3)
-- \[**Medium**\] [**Using Kong to secure a Simple Spring Boot REST API with LDAP Authentication plugin**](https://medium.com/javarevisited/using-kong-to-secure-a-simple-spring-boot-rest-api-with-ldap-authentication-plugin-3a499e01382a)
-- \[**Medium**\] [**Using Kong to configure Rate Limiting to a Simple Spring Boot REST API**](https://medium.com/javarevisited/using-kong-to-configure-rate-limiting-to-a-simple-spring-boot-rest-api-33b1899077d)
+- \[**Medium**\] [**Using Kong to secure a Simple Spring Boot REST API with Basic Authentication plugin**](https://medium.com/@ivangfr/using-kong-to-secure-a-simple-spring-boot-rest-api-with-basic-authentication-plugin-90f3529043f3)
+- \[**Medium**\] [**Using Kong to secure a Simple Spring Boot REST API with LDAP Authentication plugin**](https://medium.com/@ivangfr/using-kong-to-secure-a-simple-spring-boot-rest-api-with-ldap-authentication-plugin-3a499e01382a)
+- \[**Medium**\] [**Using Kong to configure Rate Limiting to a Simple Spring Boot REST API**](https://medium.com/@ivangfr/using-kong-to-configure-rate-limiting-to-a-simple-spring-boot-rest-api-33b1899077d)
 - \[**Medium**\] [**Using Kong to secure a Simple Spring Boot REST API with Kong OIDC plugin and Keycloak**](https://medium.com/@ivangfr/using-kong-to-secure-a-simple-spring-boot-rest-api-with-kong-oidc-plugin-and-keycloak-c8fa8de32e6e)
 
 ## Project Diagram
